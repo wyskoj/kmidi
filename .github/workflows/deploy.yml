@@ -3,6 +3,7 @@ name: Publish to Sonatype
 on:
   release:
     types: [published]
+  workflow_dispatch:  # Manually triggered workflow event
 
 jobs:
   publish:

@@ -75,27 +75,17 @@ nexusPublishing {
     repositories {
         sonatype {
             nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            username = System.getenv("OSSRH_USERNAME").also {
-                println("OSSRH_USERNAME = ${it.substring(0..2)}...")
-            }
-            password = System.getenv("OSSRH_PASSWORD").also {
-                println("OSSRH_PASSWORD = ${it.substring(0..2)}...")
-            }
+            username = System.getenv("OSSRH_USERNAME")
+            password = System.getenv("OSSRH_PASSWORD")
         }
     }
 }
 
 signing {
     useInMemoryPgpKeys(
-        System.getenv("OSSRH_GPG_SECRET_KEY_ID").also {
-            println("OSSRH_GPG_SECRET_KEY_ID = ${it.substring(0..2)}...")
-        },
-        System.getenv("OSSRH_GPG_SECRET_KEY").also {
-            println("OSSRH_GPG_SECRET_KEY = ${it.substring(0..2)}...")
-        },
-        System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD").also {
-            println("OSSRH_GPG_SECRET_KEY_PASSWORD = ${it.substring(0..2)}...")
-        }
+        System.getenv("OSSRH_GPG_SECRET_KEY_ID"),
+        System.getenv("OSSRH_GPG_SECRET_KEY"),
+        System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD")
     )
     sign(publishing.publications)
 }

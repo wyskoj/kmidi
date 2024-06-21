@@ -16,20 +16,27 @@
  */
 
 import org.wysko.kmidi.midi.StandardMidiFileParser
+import org.wysko.kmidi.parseFile
 import org.wysko.kmidi.parseInputStream
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class JVMStandardMidiFileParserTest {
     @Test
-    fun `Test parse file`() {
+    fun `Test parse file with input stream`() {
         val stream = JVMStandardMidiFileParserTest::class.java.getResourceAsStream("/bus_driver.mid")
         if (stream != null) {
             StandardMidiFileParser.parseInputStream(stream)
         } else {
             fail("Could not find resource")
         }
+    }
+
+    @Test
+    fun `Test parse file`() {
+        StandardMidiFileParser.parseFile(File("src/jvmTest/resources/bus_driver.mid"))
     }
 
     @Test

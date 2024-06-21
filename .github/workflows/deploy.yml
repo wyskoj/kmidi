@@ -1,5 +1,12 @@
 name: Publish to Sonatype
 
+env:
+  OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+  OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+  OSSRH_GPG_SECRET_KEY_ID: ${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}
+  OSSRH_GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+  OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+
 on:
   release:
     types: [published]

@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform") version "1.9.24"
+     id("org.jetbrains.dokka") version "1.9.20"
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     `maven-publish`
     signing
@@ -39,6 +40,11 @@ kotlin {
 publishing {
     publications {
         withType<MavenPublication> {
+            artifact(tasks.register("${name}JavadocJar", Jar::class) {
+                archiveClassifier.set("javadoc")
+                archiveAppendix.set(this@withType.name)
+            })
+
             pom {
                 name.set("kmidi")
                 description.set("A pragmatic, Kotlin Multiplatform library for parsing, building, and analyzing MIDI files.")

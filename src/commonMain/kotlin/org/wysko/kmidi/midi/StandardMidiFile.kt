@@ -21,6 +21,7 @@ import org.wysko.kmidi.midi.StandardMidiFile.Header
 import org.wysko.kmidi.midi.event.Event
 import org.wysko.kmidi.midi.event.MetaEvent
 import org.wysko.kmidi.midi.event.MetaEvent.EndOfTrack
+import org.wysko.kmidi.midi.event.NoteEvent
 
 private const val MAX_TPQ = 0b0111_1111_1111_1111
 
@@ -94,15 +95,20 @@ public data class StandardMidiFile(
          * The time division of a [StandardMidiFile].
          */
         public sealed class Division {
+
+            /**
+             * The number of ticks (i.e., MIDI clocks) that elapse per quarter note.
+             */
+            public abstract val ticksPerQuarterNote: Short
+
             /**
              * Metrical time specifies the number of ticks (i.e., MIDI clocks) that elapse per quarter note.
              *
-             * @property ticksPerQuarterNote The number of ticks (i.e., MIDI clocks) that elapse per quarter note.
              * @throws IllegalArgumentException If [ticksPerQuarterNote] can't be represented in 15 bits (SMF
              * specification).
              */
             public data class MetricalTime(
-                val ticksPerQuarterNote: Short
+                override val ticksPerQuarterNote: Short
             ) : Division() {
                 init {
                     require(ticksPerQuarterNote in 0..MAX_TPQ) {
@@ -121,13 +127,20 @@ public data class StandardMidiFile(
                 val framesPerSecond: Short,
                 val ticksPerFrame: Short
             ) : Division() {
-                @Suppress("MagicNumber")
-                private val validFramesPerSecond = setOf(-24, -25, -29, -30).map { it.toShort() }.toSet()
-
                 init {
                     require(framesPerSecond in validFramesPerSecond) {
                         "Invalid frames per second: $framesPerSecond"
                     }
+                }
+
+                /**
+                 * The number of ticks (i.e., MIDI clocks) that elapse per quarter note.
+                 */
+                override val ticksPerQuarterNote: Short = (-1 * framesPerSecond * ticksPerFrame).toShort()
+
+                private companion object {
+                    @Suppress("MagicNumber")
+                    private val validFramesPerSecond = setOf(-24, -25, -29, -30).map { it.toShort() }.toSet()
                 }
             }
         }
@@ -148,5 +161,16 @@ public data class StandardMidiFile(
          * @see MetaEvent.SequenceTrackName
          */
         val name: String? = events.filterIsInstance<MetaEvent.SequenceTrackName>().firstOrNull()?.text
+
+
+        /**
+         * Returns the [NoteEvent]s in the list of [Event]s.
+         */
+        public val notes: List<NoteEvent> get() = events.filterIsInstance<NoteEvent>().toList()
+
+        /**
+         * Calculates [Arc]s from the [NoteEvent]s in the track.
+         */
+        public val arcs: List<Arc> get() = Arc.fromNoteEvents(notes)
     }
 }

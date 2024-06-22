@@ -20,23 +20,23 @@
 package org.wysko.kmidi
 
 import org.wysko.kmidi.midi.StandardMidiFile
-import org.wysko.kmidi.midi.StandardMidiFileParser
+import org.wysko.kmidi.midi.StandardMidiFileReader
 import java.io.File
 import java.io.InputStream
 
 /**
- * Convenience function to parse a [File] as a [StandardMidiFile].
+ * Convenience function to read a [File] as a [StandardMidiFile].
  *
- * @param file The file to parse.
- * @return The parsed [StandardMidiFile].
+ * @param file The file to read.
+ * @return The read [StandardMidiFile].
  */
-public fun StandardMidiFileParser.parseFile(file: File): StandardMidiFile = parseByteArray(file.readBytes())
+public fun StandardMidiFileReader.readFile(file: File): StandardMidiFile = readByteArray(file.readBytes())
 
 /**
- * Convenience function to parse an [InputStream] as a [StandardMidiFile].
+ * Convenience function to read an [InputStream] as a [StandardMidiFile].
  *
- * @param inputStream The input stream to parse.
- * @return The parsed [StandardMidiFile].
+ * @param inputStream The input stream to read.
+ * @return The read [StandardMidiFile].
  */
-public fun StandardMidiFileParser.parseInputStream(inputStream: InputStream): StandardMidiFile =
-    parseByteArray(inputStream.readBytes())
+public fun StandardMidiFileReader.readInputStream(inputStream: InputStream): StandardMidiFile =
+    readByteArray(inputStream.readBytes())

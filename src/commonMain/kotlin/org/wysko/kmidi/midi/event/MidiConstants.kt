@@ -45,4 +45,11 @@ internal object MidiConstants {
         const val KEY_SIGNATURE = 0x59.toByte()
         const val SEQUENCER_SPECIFIC_EVENT = 0x7F.toByte()
     }
+
+    object Controllers {
+        const val DATA_ENTRY_MSB = 0x06.toByte()
+        const val DATA_ENTRY_LSB = 0x26.toByte()
+        const val RPN_LSB = 0x64.toByte()
+        const val RPN_MSB = 0x65.toByte()
+    }
 }

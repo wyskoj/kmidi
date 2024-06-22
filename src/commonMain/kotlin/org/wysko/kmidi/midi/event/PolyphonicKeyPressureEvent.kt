@@ -25,8 +25,8 @@ package org.wysko.kmidi.midi.event
  * @property pressure The pressure value.
  */
 public data class PolyphonicKeyPressureEvent(
-    override val time: Int,
+    override val tick: Int,
     override val channel: Byte,
     val note: Byte,
     val pressure: Byte
-) : MidiEvent(time, channel)
+) : MidiEvent(tick, channel)

@@ -46,7 +46,7 @@ private const val STATUS_MASK: Byte = 0b1111_0000.toByte()
  * Parses a Standard MIDI file.
  */
 @Suppress("CyclomaticComplexMethod", "LongMethod")
-public object StandardMidiFileParser {
+public object StandardMidiFileReader {
 
     /**
      * Parses a [ByteArray] of a Standard MIDI file.
@@ -54,14 +54,14 @@ public object StandardMidiFileParser {
      * @param bytes The bytes of the file.
      * @return A [StandardMidiFile] that represents the contents of the input.
      */
-    public fun parseByteArray(bytes: ByteArray): StandardMidiFile {
+    public fun readByteArray(bytes: ByteArray): StandardMidiFile {
         val stream = ArrayInputStream(bytes)
-        val header = parseHeader(stream)
-        val tracks = parseRemainingChunks(stream, header)
+        val header = readHeader(stream)
+        val tracks = readRemainingChunks(stream, header)
         return StandardMidiFile(header, tracks)
     }
 
-    private fun parseHeader(stream: ArrayInputStream): StandardMidiFile.Header {
+    private fun readHeader(stream: ArrayInputStream): StandardMidiFile.Header {
         // Read the chunk type
         val chunkType = stream.readNBytes(CHUNK_TYPE_LENGTH).decodeToString()
         require(chunkType == "MThd") {
@@ -106,7 +106,7 @@ public object StandardMidiFileParser {
         )
     }
 
-    private fun parseRemainingChunks(
+    private fun readRemainingChunks(
         stream: ArrayInputStream,
         header: StandardMidiFile.Header
     ): List<StandardMidiFile.Track> {
@@ -203,7 +203,7 @@ public object StandardMidiFileParser {
 
                         status == 0xF0.toByte() && prefix == 0xFF.toByte() -> {
                             val metaType = stream.read()
-                            val metaEvent = parseMetaEvent(stream, time, metaType)
+                            val metaEvent = readMetaEvent(stream, time, metaType)
                             events += metaEvent
                         }
                     }
@@ -232,7 +232,7 @@ public object StandardMidiFileParser {
             data1
         }
 
-    private fun parseMetaEvent(stream: ArrayInputStream, time: Int, metaType: Byte): Event = when (metaType) {
+    private fun readMetaEvent(stream: ArrayInputStream, time: Int, metaType: Byte): Event = when (metaType) {
         MetaEvents.SEQUENCE_NUMBER -> {
             val (_, _) = stream.readVlq() // Should always be 2
             val high = stream.read()

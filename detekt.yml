@@ -3,3 +3,14 @@ comments:
     active: true
   CommentOverPrivateProperty:
     active: true
+
+style:
+  MagicNumber:
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '8'
+  WildcardImport:
+    active: false

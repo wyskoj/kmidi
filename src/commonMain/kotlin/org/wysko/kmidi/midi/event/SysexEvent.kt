@@ -24,23 +24,23 @@ package org.wysko.kmidi.midi.event
  * @property data The data to be sent.
  */
 public data class SysexEvent(
-    override val time: Int,
+    override val tick: Int,
     val data: ByteArray
-) : Event(time) {
+) : Event(tick) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
         other as SysexEvent
 
-        if (time != other.time) return false
+        if (tick != other.tick) return false
         if (!data.contentEquals(other.data)) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = time
+        var result = tick
         result = 31 * result + data.contentHashCode()
         return result
     }

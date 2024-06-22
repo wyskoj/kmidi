@@ -26,7 +26,7 @@ package org.wysko.kmidi
  * @property frames The frames component of the timecode.
  * @property subFrames The fractional frames component of the timecode, in units of 1/100th of a frame.
  */
-data class SmpteTimecode(
+public data class SmpteTimecode(
     val hours: Byte,
     val minutes: Byte,
     val seconds: Byte,

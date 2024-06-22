@@ -22,10 +22,10 @@ package org.wysko.kmidi.midi.event
  *
  * @property note The key (note) number.
  */
-sealed class NoteEvent(
+public sealed class NoteEvent(
     override val time: Int,
     override val channel: Byte,
-    open val note: Byte
+    public open val note: Byte
 ) : MidiEvent(time, channel) {
 
     /**
@@ -38,7 +38,7 @@ sealed class NoteEvent(
      * @property velocity The non-zero velocity of the note.
      * @throws IllegalArgumentException If [velocity] is not greater than 0.
      */
-    data class NoteOn(
+    public data class NoteOn(
         override val time: Int,
         override val channel: Byte,
         override val note: Byte,
@@ -52,10 +52,9 @@ sealed class NoteEvent(
     /**
      * Signals that a note should stop playing.
      */
-    data class NoteOff(
+    public data class NoteOff(
         override val time: Int,
         override val channel: Byte,
         override val note: Byte
     ) : NoteEvent(time, channel, note)
-
 }

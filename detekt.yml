@@ -1,0 +1,5 @@
+comments:
+  CommentOverPrivateFunction:
+    active: true
+  CommentOverPrivateProperty:
+    active: true

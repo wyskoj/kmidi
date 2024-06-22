@@ -80,9 +80,9 @@ class StandardMidiFileParserTest {
 
     @Test
     fun testParseExample() {
-        StandardMidiFileParser.parseByteArray(smfExample1)
-        assertEquals(smfExpected1, StandardMidiFileParser.parseByteArray(smfExample1))
+        val smf = StandardMidiFileParser.parseByteArray(smfExample1)
+        assertEquals(smfExpected1, smf)
+
+        smf.tracks.first().events.first().time
     }
 }
-
-

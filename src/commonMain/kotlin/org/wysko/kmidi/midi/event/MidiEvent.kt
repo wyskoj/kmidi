@@ -22,4 +22,4 @@ package org.wysko.kmidi.midi.event
  *
  * @property channel The channel this event routes to.
  */
-sealed class MidiEvent(time: Int, open val channel: Byte) : Event(time)
+public sealed class MidiEvent(time: Int, public open val channel: Byte) : Event(time)

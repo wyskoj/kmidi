@@ -22,7 +22,7 @@ package org.wysko.kmidi.midi.event
  *
  * @property program The program number of the instrument.
  * */
-data class ProgramEvent(
+public data class ProgramEvent(
     override val time: Int,
     override val channel: Byte,
     val program: Byte

@@ -23,7 +23,7 @@ package org.wysko.kmidi.midi.event
  *
  * @property data The data to be sent.
  */
-data class SysexEvent(
+public data class SysexEvent(
     override val time: Int,
     val data: ByteArray
 ) : Event(time) {

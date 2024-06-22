@@ -30,9 +30,10 @@ private const val MAX_TPQ = 0b0111_1111_1111_1111
  *
  * @property header The header of the file.
  * @property tracks The tracks of the file.
- * @throws IllegalArgumentException If the length of [tracks] does not match the number specified in the [header][Header.trackCount].
+ * @throws IllegalArgumentException If the length of [tracks] does not match the number specified in the
+ * [header][Header.trackCount].
  */
-data class StandardMidiFile(
+public data class StandardMidiFile(
     val header: Header,
     val tracks: List<Track>
 ) {
@@ -51,7 +52,7 @@ data class StandardMidiFile(
      * @property division The time division of the file.
      * @throws IllegalArgumentException If [chunkType] is not "MThd".
      */
-    data class Header(
+    public data class Header(
         val chunkType: String,
         val format: Format,
         val trackCount: Short,
@@ -66,7 +67,7 @@ data class StandardMidiFile(
         /**
          * Specifies the overall organization of a [StandardMidiFile].
          */
-        enum class Format(private val value: Int) {
+        public enum class Format(private val value: Int) {
             /**
              * The file contains a single, multichannel track.
              */
@@ -82,14 +83,7 @@ data class StandardMidiFile(
              */
             Format2(2);
 
-            companion object {
-                /**
-                 * Converts a short value into a [Format] enum value.
-                 *
-                 * @param value The short value representing the format.
-                 * @return The corresponding [Format] enum value.
-                 * @throws IllegalArgumentException If the format value is invalid.
-                 */
+            internal companion object {
                 fun fromValue(value: Short): Format = entries.firstOrNull {
                     it.value == value.toInt()
                 } ?: throw IllegalArgumentException("Invalid format value: $value")
@@ -99,14 +93,15 @@ data class StandardMidiFile(
         /**
          * The time division of a [StandardMidiFile].
          */
-        sealed class Division {
+        public sealed class Division {
             /**
              * Metrical time specifies the number of ticks (i.e., MIDI clocks) that elapse per quarter note.
              *
              * @property ticksPerQuarterNote The number of ticks (i.e., MIDI clocks) that elapse per quarter note.
-             * @throws IllegalArgumentException If [ticksPerQuarterNote] can't be represented in 15 bits (SMF specification).
+             * @throws IllegalArgumentException If [ticksPerQuarterNote] can't be represented in 15 bits (SMF
+             * specification).
              */
-            data class MetricalTime(
+            public data class MetricalTime(
                 val ticksPerQuarterNote: Short
             ) : Division() {
                 init {
@@ -122,7 +117,7 @@ data class StandardMidiFile(
              * @property framesPerSecond The number of frames per second.
              * @property ticksPerFrame The number of ticks (i.e., MIDI clocks) per frame.
              */
-            data class TimecodeBasedTime(
+            public data class TimecodeBasedTime(
                 val framesPerSecond: Short,
                 val ticksPerFrame: Short
             ) : Division() {
@@ -144,7 +139,7 @@ data class StandardMidiFile(
      *
      * @property events The events in the track.
      */
-    data class Track(val events: List<Event>) {
+    public data class Track(val events: List<Event>) {
         /**
          * The name of the track, if it has one.
          *

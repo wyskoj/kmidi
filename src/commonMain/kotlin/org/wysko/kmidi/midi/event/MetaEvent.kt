@@ -29,7 +29,7 @@ private const val SECONDS_PER_MINUTE = 60
 /**
  * An [Event] that specifies non-MIDI information useful to this format or to sequencers.
  */
-sealed class MetaEvent(override val time: Int) : Event(time) {
+public sealed class MetaEvent(override val time: Int) : Event(time) {
 
     /**
      * Specifies the number of a sequence.
@@ -38,14 +38,14 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property number The sequence number.
      */
-    data class SequenceNumber(val number: Short) : MetaEvent(0)
+    public data class SequenceNumber(val number: Short) : MetaEvent(0)
 
     /**
      * Any amount of text describing anything.
      *
      * @property text The text.
      */
-    data class Text(override val time: Int, val text: String) : MetaEvent(time)
+    public data class Text(override val time: Int, val text: String) : MetaEvent(time)
 
     /**
      * A copyright notice. The notice should contain the characters (C), the year of
@@ -55,7 +55,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property text The copyright notice.
      */
-    data class CopyrightNotice(val text: String) : MetaEvent(0)
+    public data class CopyrightNotice(val text: String) : MetaEvent(0)
 
     /**
      * If in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -66,7 +66,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property text The name of the sequence or track.
      */
-    data class SequenceTrackName(val text: String) : MetaEvent(0)
+    public data class SequenceTrackName(val text: String) : MetaEvent(0)
 
     /**
      * A description of the type of instrumentation to be used in that track.
@@ -75,14 +75,14 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property text The name of the instrument.
      */
-    data class InstrumentName(val text: String) : MetaEvent(0)
+    public data class InstrumentName(val text: String) : MetaEvent(0)
 
     /**
      * A lyric to be sung. Generally, each syllable will be a separate lyric event which begins at the event's time.
      *
      * @property text The lyric text.
      */
-    data class Lyric(override val time: Int, val text: String) : MetaEvent(time)
+    public data class Lyric(override val time: Int, val text: String) : MetaEvent(time)
 
     /**
      * Normally in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -91,7 +91,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property text The name of the marker.
      */
-    data class Marker(override val time: Int, val text: String) : MetaEvent(time)
+    public data class Marker(override val time: Int, val text: String) : MetaEvent(time)
 
     /**
      * A description of something happening on a film or video screen or stage at that point in the musical score
@@ -99,7 +99,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property text The cue point text.
      */
-    data class CuePoint(override val time: Int, val text: String) : MetaEvent(time)
+    public data class CuePoint(override val time: Int, val text: String) : MetaEvent(time)
 
     /**
      * The MIDI channel (0-15) contained in this event may be used to associate a MIDI channel with all events
@@ -110,7 +110,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property channel The channel.
      */
-    data class ChannelPrefix(override val time: Int, val channel: Byte) : MetaEvent(time) {
+    public data class ChannelPrefix(override val time: Int, val channel: Byte) : MetaEvent(time) {
         init {
             require(channel in 0..MAX_MIDI_CHANNEL) { "Invalid channel: $channel" }
         }
@@ -119,14 +119,14 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
     /**
      * End of track.
      */
-    data class EndOfTrack(override val time: Int) : MetaEvent(time)
+    public data class EndOfTrack(override val time: Int) : MetaEvent(time)
 
     /**
      * Indicates a tempo change.
      *
      * @property tempo The new tempo, expressed in microseconds per MIDI quarter-note.
      */
-    data class SetTempo(override val time: Int, val tempo: Int) : MetaEvent(time) {
+    public data class SetTempo(override val time: Int, val tempo: Int) : MetaEvent(time) {
         /** Returns this tempo's value as expressed in beats per minute. */
         val beatsPerMinute: Double = MICROSECONDS_PER_MINUTE / tempo
 
@@ -143,7 +143,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @param timecode The [SmpteTimecode] at which the track chunk is supposed to start.
      */
-    data class SmpteOffset(val timecode: SmpteTimecode) : MetaEvent(0)
+    public data class SmpteOffset(val timecode: SmpteTimecode) : MetaEvent(0)
 
     /**
      * Time signature is expressed as four numbers. The first two indicate the numerator and the denominator of the
@@ -156,7 +156,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      * @property clocksInMetronomeClick The number of MIDI clocks in a metronome click.
      * @property thirtySecondNotesInMidiQuarterNote The number of notated 32nd-notes in a MIDI quarter-note.
      */
-    data class TimeSignature(
+    public data class TimeSignature(
         override val time: Int,
         val numerator: Byte,
         val denominator: Byte,
@@ -170,13 +170,13 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      * @property key The [Key].
      * @property scale The [Scale].
      */
-    data class KeySignature(override val time: Int, val key: Key, val scale: Scale) : MetaEvent(time) {
+    public data class KeySignature(override val time: Int, val key: Key, val scale: Scale) : MetaEvent(time) {
 
         /**
          * The key of the [KeySignature].
          */
         @Suppress("MagicNumber")
-        enum class Key(private val value: Int) {
+        public enum class Key(private val value: Int) {
             /** Key of C♭. */
             CFlat(-7),
 
@@ -222,8 +222,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
             /** Key of C♯. */
             CSharp(7);
 
-            companion object {
-                @Suppress("CyclomaticComplexMethod")
+            internal companion object {
                 fun fromValue(value: Byte): Key = entries.firstOrNull {
                     it.value == value.toInt()
                 } ?: throw IllegalArgumentException("Invalid key value: $value")
@@ -233,12 +232,18 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
         /**
          * The scale of the [KeySignature].
          */
-        sealed class Scale(private val value: Int) {
+        public enum class Scale(private val value: Int) {
             /** Major scale. */
-            data object Major : Scale(0)
+            Major(0),
 
             /** Minor scale. */
-            data object Minor : Scale(1)
+            Minor(1);
+
+            internal companion object {
+                fun fromValue(value: Byte): Scale = entries.firstOrNull {
+                    it.value == value.toInt()
+                } ?: throw IllegalArgumentException("Invalid scale value: $value")
+            }
         }
     }
 
@@ -251,7 +256,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
      *
      * @property data The data.
      */
-    data class SequencerSpecific(override val time: Int, val data: ByteArray) : MetaEvent(time) {
+    public data class SequencerSpecific(override val time: Int, val data: ByteArray) : MetaEvent(time) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -274,7 +279,7 @@ sealed class MetaEvent(override val time: Int) : Event(time) {
     /**
      * A meta-event that is not recognized by this library.
      */
-    data class Unknown(override val time: Int, val metaType: Byte, val data: ByteArray) : Event(time) {
+    public data class Unknown(override val time: Int, val metaType: Byte, val data: ByteArray) : Event(time) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false

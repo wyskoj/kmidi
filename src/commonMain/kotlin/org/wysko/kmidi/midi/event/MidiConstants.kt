@@ -17,11 +17,7 @@
 
 package org.wysko.kmidi.midi.event
 
-
-/**
- * Constant values for various MIDI messages, events, and meta events.
- */
-object MidiConstants {
+internal object MidiConstants {
     object ChannelVoiceMessages {
         const val NOTE_OFF_EVENT = 0b10000000.toByte()
         const val NOTE_ON_EVENT = 0b10010000.toByte()

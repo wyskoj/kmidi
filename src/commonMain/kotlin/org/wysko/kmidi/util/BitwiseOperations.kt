@@ -19,38 +19,7 @@
 
 package org.wysko.kmidi.util
 
-/**
- * Shifts the bits of this byte to the left by [other] places.
- *
- * @receiver The byte to shift the bits of.
- * @param other The number of places to shift the bits.
- * @return The byte with the bits shifted to the left.
- */
 internal infix fun Byte.shl(other: Int): Byte = (this.toInt() shl other).toByte()
-
-/**
- * Shifts the bits of this byte to the right by [other] places.
- *
- * @receiver The byte to shift the bits of.
- * @param other The number of places to shift the bits.
- * @return The byte with the bits shifted to the right.
- */
 internal infix fun Byte.shr(other: Int): Byte = (this.toInt() shr other).toByte()
-
-/**
- * Shifts the bits of this short to the left by [other] places.
- *
- * @receiver The short to shift the bits of.
- * @param other The number of places to shift the bits.
- * @return The short with the bits shifted to the left.
- */
 internal infix fun Short.shl(other: Int): Short = (this.toInt() shl other).toShort()
-
-/**
- * Shifts the bits of this short to the right by [other] places.
- *
- * @receiver The short to shift the bits of.
- * @param other The number of places to shift the bits.
- * @return The short with the bits shifted to the right.
- */
 internal infix fun Short.shr(other: Int): Short = (this.toInt() shr other).toShort()

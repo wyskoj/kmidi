@@ -20,4 +20,4 @@ package org.wysko.kmidi
 /**
  * Indicates the end of a file has unexpectedly been reached.
  */
-data object EOFException : Exception()
+public data object EOFException : Exception()

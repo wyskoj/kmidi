@@ -24,7 +24,7 @@ package org.wysko.kmidi.midi.event
  *
  * @property pressure The pressure value.
  */
-data class ChannelPressureEvent(
+public data class ChannelPressureEvent(
     override val time: Int,
     override val channel: Byte,
     val pressure: Byte

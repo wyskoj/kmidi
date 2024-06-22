@@ -1,6 +1,8 @@
 plugins {
     kotlin("multiplatform") version "1.9.24"
-     id("org.jetbrains.dokka") version "1.9.20"
+    id("org.jetbrains.dokka") version "1.9.20"
+    id("io.gitlab.arturbosch.detekt").version("1.23.3")
+
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     `maven-publish`
     signing
@@ -35,19 +37,30 @@ kotlin {
             }
         }
     }
+
+    explicitApi()
+}
+
+detekt {
+    source.setFrom("src/commonMain/kotlin", "src/jvmMain/kotlin", "src/jvmTest/kotlin", "src/commonTest/kotlin")
+    config.setFrom("detekt.yml")
 }
 
 publishing {
     publications {
         withType<MavenPublication> {
-            artifact(tasks.register("${name}JavadocJar", Jar::class) {
-                archiveClassifier.set("javadoc")
-                archiveAppendix.set(this@withType.name)
-            })
+            artifact(
+                tasks.register("${name}JavadocJar", Jar::class) {
+                    archiveClassifier.set("javadoc")
+                    archiveAppendix.set(this@withType.name)
+                }
+            )
 
             pom {
                 name.set("kmidi")
-                description.set("A pragmatic, Kotlin Multiplatform library for parsing, building, and analyzing MIDI files.")
+                description.set(
+                    "A pragmatic, Kotlin Multiplatform library for parsing, building, and analyzing MIDI files."
+                )
                 url.set("https://github.com/wyskoj/kmidi")
 
                 licenses {

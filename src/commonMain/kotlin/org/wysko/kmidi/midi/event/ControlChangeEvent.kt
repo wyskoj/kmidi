@@ -25,7 +25,7 @@ package org.wysko.kmidi.midi.event
  * @property controller The controller number.
  * @property value The new controller value.
  */
-data class ControlChangeEvent(
+public data class ControlChangeEvent(
     override val time: Int,
     override val channel: Byte,
     val controller: Byte,

@@ -30,7 +30,7 @@ import java.io.InputStream
  * @param file The file to parse.
  * @return The parsed [StandardMidiFile].
  */
-fun StandardMidiFileParser.parseFile(file: File): StandardMidiFile = parseByteArray(file.readBytes())
+public fun StandardMidiFileParser.parseFile(file: File): StandardMidiFile = parseByteArray(file.readBytes())
 
 /**
  * Convenience function to parse an [InputStream] as a [StandardMidiFile].
@@ -38,5 +38,5 @@ fun StandardMidiFileParser.parseFile(file: File): StandardMidiFile = parseByteAr
  * @param inputStream The input stream to parse.
  * @return The parsed [StandardMidiFile].
  */
-fun StandardMidiFileParser.parseInputStream(inputStream: InputStream): StandardMidiFile =
+public fun StandardMidiFileParser.parseInputStream(inputStream: InputStream): StandardMidiFile =
     parseByteArray(inputStream.readBytes())

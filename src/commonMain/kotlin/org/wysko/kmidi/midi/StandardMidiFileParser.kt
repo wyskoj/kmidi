@@ -45,7 +45,8 @@ private const val STATUS_MASK: Byte = 0b1111_0000.toByte()
 /**
  * Parses a Standard MIDI file.
  */
-object StandardMidiFileParser {
+@Suppress("CyclomaticComplexMethod", "LongMethod")
+public object StandardMidiFileParser {
 
     /**
      * Parses a [ByteArray] of a Standard MIDI file.
@@ -53,7 +54,7 @@ object StandardMidiFileParser {
      * @param bytes The bytes of the file.
      * @return A [StandardMidiFile] that represents the contents of the input.
      */
-    fun parseByteArray(bytes: ByteArray): StandardMidiFile {
+    public fun parseByteArray(bytes: ByteArray): StandardMidiFile {
         val stream = ArrayInputStream(bytes)
         val header = parseHeader(stream)
         val tracks = parseRemainingChunks(stream, header)
@@ -111,108 +112,107 @@ object StandardMidiFileParser {
     ): List<StandardMidiFile.Track> {
         val tracks = mutableListOf<StandardMidiFile.Track>()
 
-        for (i in 0..<header.trackCount) {
+        repeat(header.trackCount.toInt()) {
             val trackType = stream.readNBytes(CHUNK_TYPE_LENGTH).decodeToString()
             val trackLength = stream.readDWord()
 
             if (trackType != "MTrk") {
                 // Skip the chunk, as it is not a track
                 stream.skip(trackLength)
-                continue
-            }
+            } else {
+                var time = 0
+                var prefix: Byte = 0
+                var bytesRead = 0
+                val events = mutableListOf<Event>()
 
-            var time = 0
-            var prefix: Byte = 0
-            var bytesRead = 0
-            val events = mutableListOf<Event>()
+                while (bytesRead < trackLength) {
+                    val startingPosition = stream.position
+                    var data1: Byte = -1
+                    var data2: Byte
 
-            while (bytesRead < trackLength) {
-                val startingPosition = stream.position
-                var data1: Byte = -1
-                var data2: Byte
+                    // Read the delta time
+                    val (deltaTime, _) = stream.readVlq()
+                    time += deltaTime
 
-                // Read the delta time
-                val (deltaTime, _) = stream.readVlq()
-                time += deltaTime
+                    // Read the status byte
+                    val statusByte = stream.read()
+                    if (statusByte and IS_STATUS_MASK != 0.toByte()) {
+                        prefix = statusByte
+                    } else {
+                        data1 = statusByte
+                    }
 
-                // Read the status byte
-                val statusByte = stream.read()
-                if (statusByte and IS_STATUS_MASK != 0.toByte()) {
-                    prefix = statusByte
-                } else {
-                    data1 = statusByte
+                    // Separate channel and prefix
+                    val status = prefix and STATUS_MASK
+                    val channel = prefix and CHANNEL_MASK
+
+                    when {
+                        status == ChannelVoiceMessages.NOTE_OFF_EVENT -> {
+                            data1 = readDataByte(data1, stream)
+                            stream.read() // Skip the velocity
+                            events += NoteEvent.NoteOff(time, channel, data1)
+                        }
+
+                        status == ChannelVoiceMessages.NOTE_ON_EVENT -> {
+                            val bytes = readTwoDataBytes(data1, stream)
+                            data1 = bytes.first
+                            data2 = bytes.second
+                            events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
+                        }
+
+                        status == ChannelVoiceMessages.POLYPHONIC_KEY_PRESSURE -> {
+                            val bytes = readTwoDataBytes(data1, stream)
+                            data1 = bytes.first
+                            data2 = bytes.second
+                            events += PolyphonicKeyPressureEvent(time, channel, note = data1, pressure = data2)
+                        }
+
+                        status == ChannelVoiceMessages.CONTROL_CHANGE -> {
+                            val bytes = readTwoDataBytes(data1, stream)
+                            data1 = bytes.first
+                            data2 = bytes.second
+                            events += ControlChangeEvent(time, channel, controller = data1, value = data2)
+                        }
+
+                        status == ChannelVoiceMessages.PROGRAM_CHANGE -> {
+                            data1 = readDataByte(data1, stream)
+                            events += ProgramEvent(time, channel, program = data1)
+                        }
+
+                        status == ChannelVoiceMessages.CHANNEL_PRESSURE -> {
+                            data1 = readDataByte(data1, stream)
+                            events += ChannelPressureEvent(time, channel, pressure = data1)
+                        }
+
+                        status == ChannelVoiceMessages.PITCH_WHEEL_CHANGE -> {
+                            val bytes = readTwoDataBytes(data1, stream)
+                            data1 = bytes.first
+                            data2 = bytes.second
+                            events += PitchWheelChangeEvent(time, channel, value = ((data2 shl 7) and data1).toShort())
+                        }
+
+                        status == 0xF0.toByte() && (prefix == 0xF0.toByte() || prefix == 0xF7.toByte()) -> {
+                            // Read the length of the system exclusive message
+                            val (length, _) = stream.readVlq()
+
+                            // Read the system exclusive message
+                            val message = stream.readNBytes(length)
+
+                            events += SysexEvent(time, message)
+                        }
+
+                        status == 0xF0.toByte() && prefix == 0xFF.toByte() -> {
+                            val metaType = stream.read()
+                            val metaEvent = parseMetaEvent(stream, time, metaType)
+                            events += metaEvent
+                        }
+                    }
+
+                    bytesRead += stream.position - startingPosition
                 }
 
-                // Separate channel and prefix
-                val status = prefix and STATUS_MASK
-                val channel = prefix and CHANNEL_MASK
-
-                when {
-                    status == ChannelVoiceMessages.NOTE_OFF_EVENT -> {
-                        data1 = readDataByte(data1, stream)
-                        stream.read() // Skip the velocity
-                        events += NoteEvent.NoteOff(time, channel, data1)
-                    }
-
-                    status == ChannelVoiceMessages.NOTE_ON_EVENT -> {
-                        val bytes = readTwoDataBytes(data1, stream)
-                        data1 = bytes.first
-                        data2 = bytes.second
-                        events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
-                    }
-
-                    status == ChannelVoiceMessages.POLYPHONIC_KEY_PRESSURE -> {
-                        val bytes = readTwoDataBytes(data1, stream)
-                        data1 = bytes.first
-                        data2 = bytes.second
-                        events += PolyphonicKeyPressureEvent(time, channel, note = data1, pressure = data2)
-                    }
-
-                    status == ChannelVoiceMessages.CONTROL_CHANGE -> {
-                        val bytes = readTwoDataBytes(data1, stream)
-                        data1 = bytes.first
-                        data2 = bytes.second
-                        events += ControlChangeEvent(time, channel, controller = data1, value = data2)
-                    }
-
-                    status == ChannelVoiceMessages.PROGRAM_CHANGE -> {
-                        data1 = readDataByte(data1, stream)
-                        events += ProgramEvent(time, channel, program = data1)
-                    }
-
-                    status == ChannelVoiceMessages.CHANNEL_PRESSURE -> {
-                        data1 = readDataByte(data1, stream)
-                        events += ChannelPressureEvent(time, channel, pressure = data1)
-                    }
-
-                    status == ChannelVoiceMessages.PITCH_WHEEL_CHANGE -> {
-                        val bytes = readTwoDataBytes(data1, stream)
-                        data1 = bytes.first
-                        data2 = bytes.second
-                        events += PitchWheelChangeEvent(time, channel, value = ((data2 shl 7) and data1).toShort())
-                    }
-
-                    status == 0xF0.toByte() && (prefix == 0xF0.toByte() || prefix == 0xF7.toByte()) -> {
-                        // Read the length of the system exclusive message
-                        val (length, _) = stream.readVlq()
-
-                        // Read the system exclusive message
-                        val message = stream.readNBytes(length)
-
-                        events += SysexEvent(time, message)
-                    }
-
-                    status == 0xF0.toByte() && prefix == 0xFF.toByte() -> {
-                        val metaType = stream.read()
-                        val metaEvent = parseMetaEvent(stream, time, metaType)
-                        events += metaEvent
-                    }
-                }
-
-                bytesRead += stream.position - startingPosition
+                tracks += StandardMidiFile.Track(events)
             }
-
-            tracks += StandardMidiFile.Track(events)
         }
 
         return tracks
@@ -232,13 +232,15 @@ object StandardMidiFileParser {
             data1
         }
 
-    @Suppress("CyclomaticComplexMethod", "LongMethod")
     private fun parseMetaEvent(stream: ArrayInputStream, time: Int, metaType: Byte): Event = when (metaType) {
         MetaEvents.SEQUENCE_NUMBER -> {
             val (_, _) = stream.readVlq() // Should always be 2
             val high = stream.read()
             val low = stream.read()
+
+            @Suppress("MagicNumber")
             val sequenceNumber = (high shl 8).toShort() or low.toShort()
+
             MetaEvent.SequenceNumber(sequenceNumber)
         }
 
@@ -319,7 +321,7 @@ object StandardMidiFileParser {
             MetaEvent.KeySignature(
                 time,
                 MetaEvent.KeySignature.Key.fromValue(key),
-                if (scale > 0) Scale.Minor else Scale.Major
+                Scale.fromValue(scale)
             )
         }
 

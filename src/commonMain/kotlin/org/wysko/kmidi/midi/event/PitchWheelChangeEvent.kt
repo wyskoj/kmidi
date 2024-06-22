@@ -22,7 +22,7 @@ package org.wysko.kmidi.midi.event
  *
  * @property value The new pitch value.
  */
-data class PitchWheelChangeEvent(
+public data class PitchWheelChangeEvent(
     override val time: Int,
     override val channel: Byte,
     val value: Short

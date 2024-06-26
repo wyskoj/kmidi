@@ -26,4 +26,10 @@ public data class PitchWheelChangeEvent(
     override val tick: Int,
     override val channel: Byte,
     val value: Short
-) : MidiEvent(tick, channel)
+) : MidiEvent(tick, channel) {
+    /**
+     * The value in semitones.
+     */
+    public val semitones: Double
+        get() = (value.toDouble() - 8192.0) / 8192.0
+}

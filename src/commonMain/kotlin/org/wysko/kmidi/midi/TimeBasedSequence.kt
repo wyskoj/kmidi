@@ -12,19 +12,19 @@ private const val DEFAULT_TEMPO = 500000
  * An extension of a [StandardMidiFile] that provides time-based sequence information. This is useful for
  * applications that need to know the time at which each event occurs.
  */
-public class TimeBasedSequence private constructor(private val standardMidiFile: StandardMidiFile) {
+public class TimeBasedSequence private constructor(public val smf: StandardMidiFile) {
 
     /**
      * A list of [MetaEvent.SetTempo] events that occur in the sequence.
      *
-     * If the [standardMidiFile] does not contain any tempo events, this list will contain
+     * If the [smf] does not contain any tempo events, this list will contain
      * only the default tempo of 120 BPM at the beginning of the sequence.
      *
      * This list also removes any duplicate tempo events that occur at the same time, keeping only the last one, since
      * that one will be the active tempo.
      */
     public val tempos: List<MetaEvent.SetTempo> =
-        standardMidiFile.tracks.flatMap { it.events }.filterIsInstance<MetaEvent.SetTempo>().ifEmpty {
+        smf.tracks.flatMap { it.events }.filterIsInstance<MetaEvent.SetTempo>().ifEmpty {
             listOf(MetaEvent.SetTempo(0, DEFAULT_TEMPO))
         }.sortedBy { it.tick }.asReversed().distinctBy { it.tick }.asReversed().also {
             if (it.first().tick != 0) {
@@ -33,7 +33,7 @@ public class TimeBasedSequence private constructor(private val standardMidiFile:
         }
 
     private val eventTimes =
-        standardMidiFile.tracks.flatMap { it.events }.associateWith { getTimeAtTick(it.tick) }.toMutableMap()
+        smf.tracks.flatMap { it.events }.associateWith { getTimeAtTick(it.tick) }.toMutableMap()
 
     /**
      * The total duration of the sequence.
@@ -54,18 +54,18 @@ public class TimeBasedSequence private constructor(private val standardMidiFile:
      *
      * @param event The event to get the time of.
      * @return The time at which the specified [event] occurs.
-     * @see registerEvent
+     * @see registerEvents
      */
-    public fun getTimeOf(event: Event): Duration? = eventTimes[event]
+    public fun getTimeOf(event: Event): Duration = eventTimes[event]!!
 
     /**
-     * Registers an event such that its time is known.
+     * Registers a list of [Event]s such that their time is known.
      *
-     * @param event The event to register.
+     * @param events The events to register.
      * @see getTimeOf
      */
-    public fun registerEvent(event: Event) {
-        eventTimes[event] = getTimeAtTick(event.tick)
+    public fun registerEvents(events: List<Event>) {
+        events.forEach { eventTimes[it] = getTimeAtTick(it.tick) }
     }
 
     /**
@@ -130,7 +130,7 @@ public class TimeBasedSequence private constructor(private val standardMidiFile:
      */
     public fun convertArcsToTimedArcs(arcs: List<Arc>): List<TimedArc> = arcs.map { it.toTimedArc() }
 
-    private fun Int.toBeats(): Double = this.toDouble() / standardMidiFile.header.division.ticksPerQuarterNote
+    private fun Int.toBeats(): Double = this.toDouble() / smf.header.division.ticksPerQuarterNote
 
     private fun Arc.toTimedArc(): TimedArc {
         val startTime = getTimeAtTick(noteOn.tick)

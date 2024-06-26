@@ -57,4 +57,15 @@ public sealed class NoteEvent(
         override val channel: Byte,
         override val note: Byte
     ) : NoteEvent(tick, channel, note)
+
+    public companion object {
+        /**
+         * Filters a list of [NoteEvent]s to only include those with notes in [notes].
+         *
+         * @param notes The notes to filter by.
+         * @return A list of [NoteEvent]s with notes in [notes].
+         */
+        public fun <T : NoteEvent> List<T>.filterByNotes(vararg notes: Byte): List<T> =
+            filter { it.note in notes.toList() }
+    }
 }

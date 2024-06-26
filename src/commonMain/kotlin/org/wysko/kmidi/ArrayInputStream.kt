@@ -28,13 +28,13 @@ internal class ArrayInputStream(private val bytes: ByteArray) {
 
     fun read(): Byte = if (position < bytes.size) bytes[position++] else throw EOFException
 
-    fun readWord(): Short = (read().toShort() shl 8) or read().toShort()
+    fun readWord(): Short = (read().toShort() shl 8) or read()
 
     fun readDWord(): Int = readNBytes(4).let {
         return (it[0].toInt() and 0xFF shl 24) or
-            (it[1].toInt() and 0xFF shl 16) or
-            (it[2].toInt() and 0xFF shl 8) or
-            (it[3].toInt() and 0xFF)
+                (it[1].toInt() and 0xFF shl 16) or
+                (it[2].toInt() and 0xFF shl 8) or
+                (it[3].toInt() and 0xFF)
     }
 
     fun readNBytes(n: Int): ByteArray {
@@ -71,3 +71,5 @@ internal class ArrayInputStream(private val bytes: ByteArray) {
         return i or j or k
     }
 }
+
+private infix fun Short.or(read: Byte): Short = this or (read.toShort() and 0b00000000_11111111)

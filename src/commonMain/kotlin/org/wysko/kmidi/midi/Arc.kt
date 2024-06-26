@@ -17,6 +17,16 @@ public open class Arc(
     internal open val noteOff: NoteOff
 ) {
     /**
+     * The tick at which the arc starts.
+     */
+    public val start: Int get() = noteOn.tick
+
+    /**
+     * The tick at which the arc ends.
+     */
+    public val end: Int get() = noteOff.tick
+
+    /**
      * The note value of the arc.
      */
     public val note: Byte get() = noteOn.note
@@ -32,6 +42,15 @@ public open class Arc(
     public val velocity: Byte get() = noteOn.velocity
 
     public companion object {
+        public fun List<Arc>.toTimedArcs(sequence: TimeBasedSequence): List<TimedArc> = map { arc ->
+            TimedArc(
+                noteOn = arc.noteOn,
+                noteOff = arc.noteOff,
+                startTime = sequence.getTimeAtTick(arc.noteOn.tick),
+                endTime = sequence.getTimeAtTick(arc.noteOff.tick)
+            )
+        }
+
         /**
          * Converts a list of [NoteEvent] objects into a list of [Arc] objects.
          *

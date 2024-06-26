@@ -45,6 +45,11 @@ public data class StandardMidiFile(
     }
 
     /**
+     * The time division of the file, expressed in terms of ticks per quarter note.
+     */
+    public val tpq: Short = header.division.ticksPerQuarterNote
+
+    /**
      * The header of a Standard MIDI file.
      *
      * @property chunkType The chunk type, which is always "MThd".

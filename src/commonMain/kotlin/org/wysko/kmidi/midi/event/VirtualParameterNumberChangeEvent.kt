@@ -97,4 +97,104 @@ public sealed class VirtualParameterNumberChangeEvent(
         NonRegisteredParameterNumber(rpnValue.lsb, rpnValue.msb),
         rpnValue
     )
+
+    public companion object {
+        /**
+         * Collects all [VirtualParameterNumberChangeEvent]s from a list of [MidiEvent]s.
+         *
+         * @receiver The list of [MidiEvent]s to collect virtual parameter number changes from.
+         * @return A list of all virtual parameter number changes in the [MidiEvent]s.
+         */
+        public fun fromEvents(events: List<MidiEvent>): List<VirtualParameterNumberChangeEvent> {
+            val list = mutableListOf<VirtualParameterNumberChangeEvent>()
+            val ccEvents = events.filterIsInstance<ControlChangeEvent>()
+
+            if (ccEvents.isEmpty()) return list
+
+            val controllers = mutableMapOf(
+                MidiConstants.Controllers.RPN_LSB to RegisteredParameterNumber.Null.lsb,
+                MidiConstants.Controllers.RPN_MSB to RegisteredParameterNumber.Null.msb,
+                MidiConstants.Controllers.DATA_ENTRY_LSB to 0x00.toByte(),
+                MidiConstants.Controllers.DATA_ENTRY_MSB to 0x00.toByte()
+            )
+
+            return ccEvents.fold(
+                list
+            ) { acc: MutableList<VirtualParameterNumberChangeEvent>, controlChangeEvent: ControlChangeEvent ->
+
+                controllers[controlChangeEvent.controller] = controlChangeEvent.value
+
+                // RPNs must be set to a non-null value
+                if (controllers[MidiConstants.Controllers.RPN_LSB] == RegisteredParameterNumber.Null.lsb &&
+                    controllers[MidiConstants.Controllers.RPN_MSB] == RegisteredParameterNumber.Null.msb
+                ) {
+                    return@fold acc
+                }
+
+                // RPNs are set. Are we entering data?
+                if (controlChangeEvent.controller == MidiConstants.Controllers.DATA_ENTRY_LSB ||
+                    controlChangeEvent.controller == MidiConstants.Controllers.DATA_ENTRY_MSB
+                ) {
+                    val parameterNumber = ParameterNumber.from(
+                        controllers[MidiConstants.Controllers.RPN_LSB]!!,
+                        controllers[MidiConstants.Controllers.RPN_MSB]!!
+                    )
+                    acc += createVirtualChangeEvent(parameterNumber, controlChangeEvent, controllers)
+                }
+                acc
+            }
+        }
+
+        private fun createVirtualChangeEvent(
+            parameterNumber: ParameterNumber,
+            controlChangeEvent: ControlChangeEvent,
+            controllers: MutableMap<Byte, Byte>
+        ) = when (parameterNumber) {
+            is RegisteredParameterNumber.PitchBendSensitivity -> VirtualPitchBendSensitivityChangeEvent(
+                controlChangeEvent.tick,
+                controlChangeEvent.channel,
+                RpnValue(
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+                )
+            )
+
+            is RegisteredParameterNumber.FineTuning -> VirtualFineTuningChangeEvent(
+                controlChangeEvent.tick,
+                controlChangeEvent.channel,
+                RpnValue(
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+                )
+            )
+
+            is RegisteredParameterNumber.CoarseTuning -> VirtualCoarseTuningChangeEvent(
+                controlChangeEvent.tick,
+                controlChangeEvent.channel,
+                RpnValue(
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+                )
+            )
+
+            is RegisteredParameterNumber.ModulationDepthRange -> VirtualModulationDepthRangeChangeEvent(
+                controlChangeEvent.tick,
+                controlChangeEvent.channel,
+                RpnValue(
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+                )
+            )
+
+            else -> VirtualNonRegisteredParameterNumberChangeEvent(
+                controlChangeEvent.tick,
+                controlChangeEvent.channel,
+                parameterNumber as NonRegisteredParameterNumber,
+                RpnValue(
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+                )
+            )
+        }
+    }
 }

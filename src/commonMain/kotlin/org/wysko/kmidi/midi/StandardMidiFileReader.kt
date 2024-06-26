@@ -157,7 +157,13 @@ public object StandardMidiFileReader {
                             val bytes = readTwoDataBytes(data1, stream)
                             data1 = bytes.first
                             data2 = bytes.second
-                            events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
+
+                            // If the velocity is 0, it should be treated as a NoteOff event
+                            if (data2 == 0.toByte()) {
+                                events += NoteEvent.NoteOff(time, channel, note = data1)
+                            } else {
+                                events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
+                            }
                         }
 
                         status == ChannelVoiceMessages.POLYPHONIC_KEY_PRESSURE -> {
@@ -188,7 +194,7 @@ public object StandardMidiFileReader {
                             val bytes = readTwoDataBytes(data1, stream)
                             data1 = bytes.first
                             data2 = bytes.second
-                            events += PitchWheelChangeEvent(time, channel, value = ((data2 shl 7) and data1).toShort())
+                            events += PitchWheelChangeEvent(time, channel, value = (data2.toShort() shl 7) or data1.toShort())
                         }
 
                         status == 0xF0.toByte() && (prefix == 0xF0.toByte() || prefix == 0xF7.toByte()) -> {

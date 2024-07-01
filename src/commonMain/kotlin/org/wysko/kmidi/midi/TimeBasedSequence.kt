@@ -26,9 +26,9 @@ public class TimeBasedSequence private constructor(public val smf: StandardMidiF
     public val tempos: List<MetaEvent.SetTempo> =
         smf.tracks.flatMap { it.events }.filterIsInstance<MetaEvent.SetTempo>().ifEmpty {
             listOf(MetaEvent.SetTempo(0, DEFAULT_TEMPO))
-        }.sortedBy { it.tick }.asReversed().distinctBy { it.tick }.asReversed().also {
+        }.sortedBy { it.tick }.asReversed().distinctBy { it.tick }.asReversed().toMutableList().also {
             if (it.first().tick != 0) {
-                it.toMutableList().add(0, MetaEvent.SetTempo(0, DEFAULT_TEMPO))
+                it.add(0, MetaEvent.SetTempo(0, DEFAULT_TEMPO))
             }
         }
 

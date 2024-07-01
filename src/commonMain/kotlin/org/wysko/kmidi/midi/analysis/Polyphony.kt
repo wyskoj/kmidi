@@ -26,6 +26,8 @@ public object Polyphony {
      *
      * Note that this analysis method is in tick-space, not time-space.
      *
+     * If it happens to be that the total number of seconds is 0, the average polyphony will be 0.
+     *
      * @param noteEvents The list of note events.
      * @return The average polyphony.
      */
@@ -36,7 +38,8 @@ public object Polyphony {
             polyphony * duration
         }
         val totalSeconds = polyphonyIndex.keys.sumOf { it.second - it.first }
-        return polyphonyTicks.sum() / totalSeconds.toDouble()
+        val averagePolyphony = polyphonyTicks.sum() / totalSeconds.toDouble()
+        return if (averagePolyphony.isNaN()) 0.0 else averagePolyphony
     }
 
     private fun buildPolyphonyIndex(noteEvents: List<NoteEvent>): Map<Pair<Int, Int>, Int> {

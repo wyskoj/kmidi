@@ -24,16 +24,15 @@ public sealed class VirtualParameterNumberChangeEvent(
     override val tick: Int,
     public open val channel: Byte,
     public open val parameterNumber: ParameterNumber,
-    public open val rpnValue: RpnValue
+    public open val rpnValue: RpnValue,
 ) : VirtualEvent(tick) {
-
     /**
      * A change to a [RegisteredParameterNumber].
      */
     public class VirtualPitchBendSensitivityChangeEvent(
         override val tick: Int,
         override val channel: Byte,
-        override val rpnValue: RpnValue
+        override val rpnValue: RpnValue,
     ) : VirtualParameterNumberChangeEvent(tick, channel, RegisteredParameterNumber.PitchBendSensitivity, rpnValue) {
         /**
          * The value of the pitch bend sensitivity, in semitones.
@@ -47,7 +46,7 @@ public sealed class VirtualParameterNumberChangeEvent(
     public class VirtualFineTuningChangeEvent(
         override val tick: Int,
         override val channel: Byte,
-        override val rpnValue: RpnValue
+        override val rpnValue: RpnValue,
     ) : VirtualParameterNumberChangeEvent(tick, channel, RegisteredParameterNumber.FineTuning, rpnValue) {
         /**
          * The value of the fine-tuning, in cents.
@@ -61,7 +60,7 @@ public sealed class VirtualParameterNumberChangeEvent(
     public class VirtualCoarseTuningChangeEvent(
         override val tick: Int,
         override val channel: Byte,
-        override val rpnValue: RpnValue
+        override val rpnValue: RpnValue,
     ) : VirtualParameterNumberChangeEvent(tick, channel, RegisteredParameterNumber.CoarseTuning, rpnValue) {
         /**
          * The value of the coarse-tuning, in semitones.
@@ -75,7 +74,7 @@ public sealed class VirtualParameterNumberChangeEvent(
     public class VirtualModulationDepthRangeChangeEvent(
         override val tick: Int,
         override val channel: Byte,
-        override val rpnValue: RpnValue
+        override val rpnValue: RpnValue,
     ) : VirtualParameterNumberChangeEvent(tick, channel, RegisteredParameterNumber.ModulationDepthRange, rpnValue) {
         /**
          * The value of the modulation depth range, in semitones.
@@ -90,13 +89,13 @@ public sealed class VirtualParameterNumberChangeEvent(
         override val tick: Int,
         override val channel: Byte,
         override val parameterNumber: NonRegisteredParameterNumber,
-        override val rpnValue: RpnValue
+        override val rpnValue: RpnValue,
     ) : VirtualParameterNumberChangeEvent(
-        tick,
-        channel,
-        NonRegisteredParameterNumber(rpnValue.lsb, rpnValue.msb),
-        rpnValue
-    )
+            tick,
+            channel,
+            NonRegisteredParameterNumber(rpnValue.lsb, rpnValue.msb),
+            rpnValue,
+        )
 
     public companion object {
         /**
@@ -111,15 +110,16 @@ public sealed class VirtualParameterNumberChangeEvent(
 
             if (ccEvents.isEmpty()) return list
 
-            val controllers = mutableMapOf(
-                MidiConstants.Controllers.RPN_LSB to RegisteredParameterNumber.Null.lsb,
-                MidiConstants.Controllers.RPN_MSB to RegisteredParameterNumber.Null.msb,
-                MidiConstants.Controllers.DATA_ENTRY_LSB to 0x00.toByte(),
-                MidiConstants.Controllers.DATA_ENTRY_MSB to 0x00.toByte()
-            )
+            val controllers =
+                mutableMapOf(
+                    MidiConstants.Controllers.RPN_LSB to RegisteredParameterNumber.Null.lsb,
+                    MidiConstants.Controllers.RPN_MSB to RegisteredParameterNumber.Null.msb,
+                    MidiConstants.Controllers.DATA_ENTRY_LSB to 0x00.toByte(),
+                    MidiConstants.Controllers.DATA_ENTRY_MSB to 0x00.toByte(),
+                )
 
             return ccEvents.fold(
-                list
+                list,
             ) { acc: MutableList<VirtualParameterNumberChangeEvent>, controlChangeEvent: ControlChangeEvent ->
 
                 controllers[controlChangeEvent.controller] = controlChangeEvent.value
@@ -135,10 +135,11 @@ public sealed class VirtualParameterNumberChangeEvent(
                 if (controlChangeEvent.controller == MidiConstants.Controllers.DATA_ENTRY_LSB ||
                     controlChangeEvent.controller == MidiConstants.Controllers.DATA_ENTRY_MSB
                 ) {
-                    val parameterNumber = ParameterNumber.from(
-                        controllers[MidiConstants.Controllers.RPN_LSB]!!,
-                        controllers[MidiConstants.Controllers.RPN_MSB]!!
-                    )
+                    val parameterNumber =
+                        ParameterNumber.from(
+                            controllers[MidiConstants.Controllers.RPN_LSB]!!,
+                            controllers[MidiConstants.Controllers.RPN_MSB]!!,
+                        )
                     acc += createVirtualChangeEvent(parameterNumber, controlChangeEvent, controllers)
                 }
                 acc
@@ -148,53 +149,58 @@ public sealed class VirtualParameterNumberChangeEvent(
         private fun createVirtualChangeEvent(
             parameterNumber: ParameterNumber,
             controlChangeEvent: ControlChangeEvent,
-            controllers: MutableMap<Byte, Byte>
+            controllers: MutableMap<Byte, Byte>,
         ) = when (parameterNumber) {
-            is RegisteredParameterNumber.PitchBendSensitivity -> VirtualPitchBendSensitivityChangeEvent(
-                controlChangeEvent.tick,
-                controlChangeEvent.channel,
-                RpnValue(
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+            is RegisteredParameterNumber.PitchBendSensitivity ->
+                VirtualPitchBendSensitivityChangeEvent(
+                    controlChangeEvent.tick,
+                    controlChangeEvent.channel,
+                    RpnValue(
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!,
+                    ),
                 )
-            )
 
-            is RegisteredParameterNumber.FineTuning -> VirtualFineTuningChangeEvent(
-                controlChangeEvent.tick,
-                controlChangeEvent.channel,
-                RpnValue(
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+            is RegisteredParameterNumber.FineTuning ->
+                VirtualFineTuningChangeEvent(
+                    controlChangeEvent.tick,
+                    controlChangeEvent.channel,
+                    RpnValue(
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!,
+                    ),
                 )
-            )
 
-            is RegisteredParameterNumber.CoarseTuning -> VirtualCoarseTuningChangeEvent(
-                controlChangeEvent.tick,
-                controlChangeEvent.channel,
-                RpnValue(
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+            is RegisteredParameterNumber.CoarseTuning ->
+                VirtualCoarseTuningChangeEvent(
+                    controlChangeEvent.tick,
+                    controlChangeEvent.channel,
+                    RpnValue(
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!,
+                    ),
                 )
-            )
 
-            is RegisteredParameterNumber.ModulationDepthRange -> VirtualModulationDepthRangeChangeEvent(
-                controlChangeEvent.tick,
-                controlChangeEvent.channel,
-                RpnValue(
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+            is RegisteredParameterNumber.ModulationDepthRange ->
+                VirtualModulationDepthRangeChangeEvent(
+                    controlChangeEvent.tick,
+                    controlChangeEvent.channel,
+                    RpnValue(
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!,
+                    ),
                 )
-            )
 
-            else -> VirtualNonRegisteredParameterNumberChangeEvent(
-                controlChangeEvent.tick,
-                controlChangeEvent.channel,
-                parameterNumber as NonRegisteredParameterNumber,
-                RpnValue(
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
-                    controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!
+            else ->
+                VirtualNonRegisteredParameterNumberChangeEvent(
+                    controlChangeEvent.tick,
+                    controlChangeEvent.channel,
+                    parameterNumber as NonRegisteredParameterNumber,
+                    RpnValue(
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_MSB]!!,
+                        controllers[MidiConstants.Controllers.DATA_ENTRY_LSB]!!,
+                    ),
                 )
-            )
         }
     }
 }

@@ -20,16 +20,16 @@ package org.wysko.kmidi
 /**
  * Representation of an SMPTE timecode, which is used in film, video, and audio production.
  *
- * @property hours The hours component of the timecode.
- * @property minutes The minutes component of the timecode.
- * @property seconds The seconds component of the timecode.
- * @property frames The frames component of the timecode.
- * @property subFrames The fractional frames component of the timecode, in units of 1/100th of a frame.
+ * @property hours The hour component of the timecode.
+ * @property minutes The minute component of the timecode.
+ * @property seconds The second component of the timecode.
+ * @property frames The frame component of the timecode.
+ * @property subFrames The fractional frame component of the timecode, in 1/100th of a frame.
  */
 public data class SmpteTimecode(
     val hours: Byte,
     val minutes: Byte,
     val seconds: Byte,
     val frames: Byte,
-    val subFrames: Byte
+    val subFrames: Byte,
 )

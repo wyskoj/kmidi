@@ -5,7 +5,9 @@ import org.wysko.kmidi.midi.StandardMidiFile
 /**
  * A virtual event that is not an actual MIDI event, but a virtual construct for convenience.
  */
-public sealed class VirtualEvent(override val tick: Int) : Event(tick) {
+public sealed class VirtualEvent(
+    override val tick: Int,
+) : Event(tick) {
     public companion object {
         /**
          * Collects all [VirtualEvent]s from a [StandardMidiFile].
@@ -15,7 +17,10 @@ public sealed class VirtualEvent(override val tick: Int) : Event(tick) {
          */
         public fun StandardMidiFile.collectVirtualEvents(): List<VirtualEvent> =
             with(tracks.flatMap { it.events }.filterIsInstance<MidiEvent>()) {
-                (VirtualParameterNumberChangeEvent.fromEvents(this) + VirtualCompositePitchBendEvent.fromEvents(this)).sortedBy { it.tick }
+                (
+                    VirtualParameterNumberChangeEvent.fromEvents(this) +
+                        VirtualCompositePitchBendEvent.fromEvents(this)
+                ).sortedBy { it.tick }
             }
     }
 }

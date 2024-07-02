@@ -23,7 +23,9 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 
 @Suppress("MagicNumber")
-internal class ArrayInputStream(private val bytes: ByteArray) {
+internal class ArrayInputStream(
+    private val bytes: ByteArray,
+) {
     var position = 0
         private set
 
@@ -31,12 +33,13 @@ internal class ArrayInputStream(private val bytes: ByteArray) {
 
     fun readWord(): Short = (read().toShort() shl 8) or read()
 
-    fun readDWord(): Int = readNBytes(4).let {
-        return (it[0].toInt() and 0xFF shl 24) or
+    fun readDWord(): Int =
+        readNBytes(4).let {
+            return (it[0].toInt() and 0xFF shl 24) or
                 (it[1].toInt() and 0xFF shl 16) or
                 (it[2].toInt() and 0xFF shl 8) or
                 (it[3].toInt() and 0xFF)
-    }
+        }
 
     fun readNBytes(n: Int): ByteArray {
         val array = ByteArray(n)
@@ -73,4 +76,6 @@ internal class ArrayInputStream(private val bytes: ByteArray) {
     }
 }
 
-private infix fun Short.or(read: Byte): Short = this or (read.toShort() and 0b00000000_11111111)
+private const val SHORT_MASK: Short = 0b00000000_11111111
+
+private infix fun Short.or(read: Byte): Short = this or (read.toShort() and SHORT_MASK)

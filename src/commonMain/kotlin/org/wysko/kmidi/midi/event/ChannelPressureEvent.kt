@@ -27,5 +27,5 @@ package org.wysko.kmidi.midi.event
 public data class ChannelPressureEvent(
     override val tick: Int,
     override val channel: Byte,
-    val pressure: Byte
+    val pressure: Byte,
 ) : MidiEvent(tick, channel)

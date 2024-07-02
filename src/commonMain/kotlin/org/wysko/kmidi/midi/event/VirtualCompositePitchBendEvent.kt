@@ -1,6 +1,5 @@
 package org.wysko.kmidi.midi.event
 
-import org.wysko.kmidi.midi.StandardMidiFile
 import org.wysko.kmidi.midi.event.VirtualParameterNumberChangeEvent.VirtualPitchBendSensitivityChangeEvent
 
 /**
@@ -11,10 +10,9 @@ import org.wysko.kmidi.midi.event.VirtualParameterNumberChangeEvent.VirtualPitch
  */
 public class VirtualCompositePitchBendEvent(
     override val tick: Int,
-    public val bend: Double
+    public val bend: Double,
 ) : VirtualEvent(tick) {
     public companion object {
-
         /**
          * Converts a list of [MidiEvent] into a list of [VirtualCompositePitchBendEvent].
          *
@@ -30,8 +28,10 @@ public class VirtualCompositePitchBendEvent(
             var pitchWheel = 0.0
             var pitchBendRange = 2.0
 
-            val sensitivityEvents = VirtualParameterNumberChangeEvent.fromEvents(events)
-                .filterIsInstance<VirtualPitchBendSensitivityChangeEvent>()
+            val sensitivityEvents =
+                VirtualParameterNumberChangeEvent
+                    .fromEvents(events)
+                    .filterIsInstance<VirtualPitchBendSensitivityChangeEvent>()
             val bendEvents = events.filterIsInstance<PitchWheelChangeEvent>()
 
             val inputEvents = (sensitivityEvents + bendEvents).sortedBy { it.tick }
@@ -52,9 +52,11 @@ public class VirtualCompositePitchBendEvent(
                     }
                 }
 
-                outputEvents += VirtualCompositePitchBendEvent(
-                    event.tick, pitchWheel * pitchBendRange
-                )
+                outputEvents +=
+                    VirtualCompositePitchBendEvent(
+                        event.tick,
+                        pitchWheel * pitchBendRange,
+                    )
             }
 
             return outputEvents

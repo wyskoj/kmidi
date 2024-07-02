@@ -17,6 +17,8 @@
 
 package org.wysko.kmidi.midi.event
 
+private const val PITCH_CENTER_RANGE = 8192.0
+
 /**
  * Indicates the channel's pitch is to change.
  *
@@ -25,11 +27,11 @@ package org.wysko.kmidi.midi.event
 public data class PitchWheelChangeEvent(
     override val tick: Int,
     override val channel: Byte,
-    val value: Short
+    val value: Short,
 ) : MidiEvent(tick, channel) {
     /**
      * The value in semitones.
      */
     public val semitones: Double
-        get() = (value.toDouble() - 8192.0) / 8192.0
+        get() = (value.toDouble() - PITCH_CENTER_RANGE) / PITCH_CENTER_RANGE
 }

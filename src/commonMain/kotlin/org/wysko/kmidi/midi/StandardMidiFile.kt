@@ -36,7 +36,7 @@ private const val MAX_TPQ = 0b0111_1111_1111_1111
  */
 public data class StandardMidiFile(
     val header: Header,
-    val tracks: List<Track>
+    val tracks: List<Track>,
 ) {
     init {
         check(tracks.size == header.trackCount.toInt()) {
@@ -62,7 +62,7 @@ public data class StandardMidiFile(
         val chunkType: String,
         val format: Format,
         val trackCount: Short,
-        val division: Division
+        val division: Division,
     ) {
         init {
             require(chunkType == HEADER_MAGIC) {
@@ -73,7 +73,9 @@ public data class StandardMidiFile(
         /**
          * Specifies the overall organization of a [StandardMidiFile].
          */
-        public enum class Format(private val value: Int) {
+        public enum class Format(
+            private val value: Int,
+        ) {
             /**
              * The file contains a single, multichannel track.
              */
@@ -87,12 +89,14 @@ public data class StandardMidiFile(
             /**
              * The file contains one or more sequentially independent single-track patterns.
              */
-            Format2(2);
+            Format2(2),
+            ;
 
             internal companion object {
-                fun fromValue(value: Short): Format = entries.firstOrNull {
-                    it.value == value.toInt()
-                } ?: throw IllegalArgumentException("Invalid format value: $value")
+                fun fromValue(value: Short): Format =
+                    entries.firstOrNull {
+                        it.value == value.toInt()
+                    } ?: throw IllegalArgumentException("Invalid format value: $value")
             }
         }
 
@@ -100,7 +104,6 @@ public data class StandardMidiFile(
          * The time division of a [StandardMidiFile].
          */
         public sealed class Division {
-
             /**
              * The number of ticks (i.e., MIDI clocks) that elapse per quarter note.
              */
@@ -113,7 +116,7 @@ public data class StandardMidiFile(
              * specification).
              */
             public data class MetricalTime(
-                override val ticksPerQuarterNote: Short
+                override val ticksPerQuarterNote: Short,
             ) : Division() {
                 init {
                     require(ticksPerQuarterNote in 0..MAX_TPQ) {
@@ -130,7 +133,7 @@ public data class StandardMidiFile(
              */
             public data class TimecodeBasedTime(
                 val framesPerSecond: Short,
-                val ticksPerFrame: Short
+                val ticksPerFrame: Short,
             ) : Division() {
                 init {
                     require(framesPerSecond in validFramesPerSecond) {
@@ -161,7 +164,9 @@ public data class StandardMidiFile(
      *
      * @property events The events in the track.
      */
-    public data class Track(val events: List<Event>) {
+    public data class Track(
+        val events: List<Event>,
+    ) {
         /**
          * The name of the track, if it has one.
          *

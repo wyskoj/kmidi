@@ -13,7 +13,7 @@ public data class TimedArc(
     public override val noteOn: NoteEvent.NoteOn,
     public override val noteOff: NoteEvent.NoteOff,
     public val startTime: Duration,
-    public val endTime: Duration
+    public val endTime: Duration,
 ) : Arc(noteOn, noteOff) {
     /**
      * The duration of the arc.
@@ -36,7 +36,9 @@ public data class TimedArc(
          * @param noteEvents The list of [NoteEvent] objects to convert.
          * @return The list of [TimedArc] objects generated from the [noteEvents].
          */
-        public fun fromNoteEvents(sequence: TimeBasedSequence, noteEvents: List<NoteEvent>): List<TimedArc> =
-            fromNoteEvents(noteEvents).toTimedArcs(sequence)
+        public fun fromNoteEvents(
+            sequence: TimeBasedSequence,
+            noteEvents: List<NoteEvent>,
+        ): List<TimedArc> = fromNoteEvents(noteEvents).toTimedArcs(sequence)
     }
 }

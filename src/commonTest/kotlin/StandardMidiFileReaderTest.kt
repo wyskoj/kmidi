@@ -25,34 +25,35 @@ import kotlin.test.assertEquals
 
 class StandardMidiFileReaderTest {
     companion object {
-        private val smfExpected1 = StandardMidiFile(
-            StandardMidiFile.Header(
-                "MThd",
-                StandardMidiFile.Header.Format.Format0,
-                1,
-                StandardMidiFile.Header.Division.MetricalTime(96)
-            ),
-            listOf(
-                StandardMidiFile.Track(
-                    listOf(
-                        MetaEvent.TimeSignature(0, 4, 2, 24, 8),
-                        MetaEvent.SetTempo(0, 500000),
-                        ProgramEvent(0, 0, 5),
-                        ProgramEvent(0, 1, 0x2E),
-                        ProgramEvent(0, 2, 0x46),
-                        NoteEvent.NoteOn(0, 2, 0x30, 0x60),
-                        NoteEvent.NoteOn(0, 2, 0x3C, 0x60),
-                        NoteEvent.NoteOn(0x60, 1, 0x43, 0x40),
-                        NoteEvent.NoteOn(0x60 + 0x60, 0, 0x4C, 0x20),
-                        NoteEvent.NoteOff(0x60 * 2 + 0xC0, 2, 0x30),
-                        NoteEvent.NoteOff(0x60 * 2 + 0xC0, 2, 0x3C),
-                        NoteEvent.NoteOff(0x60 * 2 + 0xC0, 1, 0x43),
-                        NoteEvent.NoteOff(0x60 * 2 + 0xC0, 0, 0x4C),
-                        MetaEvent.EndOfTrack(0x60 * 2 + 0xC0)
-                    )
-                )
+        private val smfExpected1 =
+            StandardMidiFile(
+                StandardMidiFile.Header(
+                    "MThd",
+                    StandardMidiFile.Header.Format.Format0,
+                    1,
+                    StandardMidiFile.Header.Division.MetricalTime(96),
+                ),
+                listOf(
+                    StandardMidiFile.Track(
+                        listOf(
+                            MetaEvent.TimeSignature(0, 4, 2, 24, 8),
+                            MetaEvent.SetTempo(0, 500000),
+                            ProgramEvent(0, 0, 5),
+                            ProgramEvent(0, 1, 0x2E),
+                            ProgramEvent(0, 2, 0x46),
+                            NoteEvent.NoteOn(0, 2, 0x30, 0x60),
+                            NoteEvent.NoteOn(0, 2, 0x3C, 0x60),
+                            NoteEvent.NoteOn(0x60, 1, 0x43, 0x40),
+                            NoteEvent.NoteOn(0x60 + 0x60, 0, 0x4C, 0x20),
+                            NoteEvent.NoteOff(0x60 * 2 + 0xC0, 2, 0x30),
+                            NoteEvent.NoteOff(0x60 * 2 + 0xC0, 2, 0x3C),
+                            NoteEvent.NoteOff(0x60 * 2 + 0xC0, 1, 0x43),
+                            NoteEvent.NoteOff(0x60 * 2 + 0xC0, 0, 0x4C),
+                            MetaEvent.EndOfTrack(0x60 * 2 + 0xC0),
+                        ),
+                    ),
+                ),
             )
-        )
     }
 
     @Test

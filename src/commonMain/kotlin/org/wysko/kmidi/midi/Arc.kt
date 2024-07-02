@@ -14,7 +14,7 @@ private const val MIDI_NOTES_RANGE = 128
  */
 public open class Arc(
     internal open val noteOn: NoteOn,
-    internal open val noteOff: NoteOff
+    internal open val noteOff: NoteOff,
 ) {
     /**
      * The tick at which the arc starts.
@@ -42,14 +42,15 @@ public open class Arc(
     public val velocity: Byte get() = noteOn.velocity
 
     public companion object {
-        public fun List<Arc>.toTimedArcs(sequence: TimeBasedSequence): List<TimedArc> = map { arc ->
-            TimedArc(
-                noteOn = arc.noteOn,
-                noteOff = arc.noteOff,
-                startTime = sequence.getTimeAtTick(arc.noteOn.tick),
-                endTime = sequence.getTimeAtTick(arc.noteOff.tick)
-            )
-        }
+        public fun List<Arc>.toTimedArcs(sequence: TimeBasedSequence): List<TimedArc> =
+            map { arc ->
+                TimedArc(
+                    noteOn = arc.noteOn,
+                    noteOff = arc.noteOff,
+                    startTime = sequence.getTimeAtTick(arc.noteOn.tick),
+                    endTime = sequence.getTimeAtTick(arc.noteOff.tick),
+                )
+            }
 
         /**
          * Converts a list of [NoteEvent] objects into a list of [Arc] objects.
@@ -71,12 +72,13 @@ public open class Arc(
                             onEvents[noteInt] = noteEvent
                         }
 
-                    is NoteOff -> onEvents[noteInt]?.let {
-                        arcs.add(
-                            Arc(it, noteEvent),
-                        )
-                        onEvents[noteInt] = null
-                    }
+                    is NoteOff ->
+                        onEvents[noteInt]?.let {
+                            arcs.add(
+                                Arc(it, noteEvent),
+                            )
+                            onEvents[noteInt] = null
+                        }
                 }
             }
 

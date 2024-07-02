@@ -25,4 +25,6 @@ import org.wysko.kmidi.midi.StandardMidiFile
  * @property tick The time at which this event occurs, expressed in MIDI clocks, defined by the file's
  * [Division][StandardMidiFile.Header.Division].
  */
-public sealed class Event(public open val tick: Int)
+public sealed class Event(
+    public open val tick: Int,
+)

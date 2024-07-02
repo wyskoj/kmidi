@@ -9,7 +9,6 @@ import org.wysko.kmidi.midi.event.NoteEvent.NoteOn
  * simultaneous notes being played at a given time.
  */
 public object Polyphony {
-
     /**
      * Calculates the maximum polyphony from a list of note events.
      *
@@ -22,7 +21,7 @@ public object Polyphony {
     }
 
     /**
-     * Calculates the average polyphony of a given list of note events.
+     * Calculates the average polyphony from a list of note events.
      *
      * Note that this analysis method is in tick-space, not time-space.
      *
@@ -33,10 +32,11 @@ public object Polyphony {
      */
     public fun averagePolyphony(noteEvents: List<NoteEvent>): Double {
         val polyphonyIndex = buildPolyphonyIndex(noteEvents)
-        val polyphonyTicks = polyphonyIndex.map { (time, polyphony) ->
-            val duration = time.second - time.first
-            polyphony * duration
-        }
+        val polyphonyTicks =
+            polyphonyIndex.map { (time, polyphony) ->
+                val duration = time.second - time.first
+                polyphony * duration
+            }
         val totalSeconds = polyphonyIndex.keys.sumOf { it.second - it.first }
         val averagePolyphony = polyphonyTicks.sum() / totalSeconds.toDouble()
         return if (averagePolyphony.isNaN()) 0.0 else averagePolyphony

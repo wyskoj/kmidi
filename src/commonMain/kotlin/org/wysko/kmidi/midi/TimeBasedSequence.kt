@@ -12,8 +12,9 @@ private const val DEFAULT_TEMPO = 500000
  * An extension of a [StandardMidiFile] that provides time-based sequence information. This is useful for
  * applications that need to know the time at which each event occurs.
  */
-public class TimeBasedSequence private constructor(public val smf: StandardMidiFile) {
-
+public class TimeBasedSequence private constructor(
+    public val smf: StandardMidiFile,
+) {
     /**
      * A list of [MetaEvent.SetTempo] events that occur in the sequence.
      *
@@ -24,16 +25,27 @@ public class TimeBasedSequence private constructor(public val smf: StandardMidiF
      * that one will be the active tempo.
      */
     public val tempos: List<MetaEvent.SetTempo> =
-        smf.tracks.flatMap { it.events }.filterIsInstance<MetaEvent.SetTempo>().ifEmpty {
-            listOf(MetaEvent.SetTempo(0, DEFAULT_TEMPO))
-        }.sortedBy { it.tick }.asReversed().distinctBy { it.tick }.asReversed().toMutableList().also {
-            if (it.first().tick != 0) {
-                it.add(0, MetaEvent.SetTempo(0, DEFAULT_TEMPO))
+        smf.tracks
+            .flatMap { it.events }
+            .filterIsInstance<MetaEvent.SetTempo>()
+            .ifEmpty {
+                listOf(MetaEvent.SetTempo(0, DEFAULT_TEMPO))
+            }.sortedBy { it.tick }
+            .asReversed()
+            .distinctBy { it.tick }
+            .asReversed()
+            .toMutableList()
+            .also {
+                if (it.first().tick != 0) {
+                    it.add(0, MetaEvent.SetTempo(0, DEFAULT_TEMPO))
+                }
             }
-        }
 
     private val eventTimes =
-        smf.tracks.flatMap { it.events }.associateWith { getTimeAtTick(it.tick) }.toMutableMap()
+        smf.tracks
+            .flatMap { it.events }
+            .associateWith { getTimeAtTick(it.tick) }
+            .toMutableMap()
 
     /**
      * The total duration of the sequence.
@@ -79,15 +91,18 @@ public class TimeBasedSequence private constructor(public val smf: StandardMidiF
         if (tempos.size == 1 || tick < 0) return (tempos.first().secondsPerBeat * tick.toBeats()).seconds
 
         // Get all tempos that have started and finished before the current time.
-        return tempos.filter { it.tick < tick }.foldIndexed(0.0) { index, acc, tempo ->
-            val remainingTime = if (index + 1 in tempos.indices) {
-                tempos[index + 1].tick.coerceAtMost(tick)
-            } else {
-                tick
-            } - tempo.tick
+        return tempos
+            .filter { it.tick < tick }
+            .foldIndexed(0.0) { index, acc, tempo ->
+                val remainingTime =
+                    if (index + 1 in tempos.indices) {
+                        tempos[index + 1].tick.coerceAtMost(tick)
+                    } else {
+                        tick
+                    } - tempo.tick
 
-            acc + remainingTime.toBeats() * tempo.secondsPerBeat
-        }.seconds
+                acc + remainingTime.toBeats() * tempo.secondsPerBeat
+            }.seconds
     }
 
     /**
@@ -106,10 +121,11 @@ public class TimeBasedSequence private constructor(public val smf: StandardMidiF
      * @param tick The tick to get the tempo at.
      * @return The active tempo at the specified [tick].
      */
-    public fun getTempoAtTick(tick: Int): MetaEvent.SetTempo = when {
-        tempos.size == 1 || tick < 0 -> tempos.first()
-        else -> tempos.last { it.tick <= tick }
-    }
+    public fun getTempoAtTick(tick: Int): MetaEvent.SetTempo =
+        when {
+            tempos.size == 1 || tick < 0 -> tempos.first()
+            else -> tempos.last { it.tick <= tick }
+        }
 
     /**
      * Returns the active tempo at the specified [time].
@@ -117,10 +133,11 @@ public class TimeBasedSequence private constructor(public val smf: StandardMidiF
      * @param time The time to get the tempo at.
      * @return The active tempo at the specified [time].
      */
-    public fun getTempoAtTime(time: Duration): MetaEvent.SetTempo = when {
-        tempos.size == 1 || time < 0.seconds -> tempos.first()
-        else -> tempos.last { eventTimes[it]!! <= time }
-    }
+    public fun getTempoAtTime(time: Duration): MetaEvent.SetTempo =
+        when {
+            tempos.size == 1 || time < 0.seconds -> tempos.first()
+            else -> tempos.last { eventTimes[it]!! <= time }
+        }
 
     /**
      * Converts a list of [Arc]s to a list of [TimedArc]s.

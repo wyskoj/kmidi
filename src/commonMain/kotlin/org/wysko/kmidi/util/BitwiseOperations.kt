@@ -20,6 +20,9 @@
 package org.wysko.kmidi.util
 
 internal infix fun Byte.shl(other: Int): Byte = (this.toInt() shl other).toByte()
+
 internal infix fun Byte.shr(other: Int): Byte = (this.toInt() shr other).toByte()
+
 internal infix fun Short.shl(other: Int): Short = (this.toInt() shl other).toShort()
+
 internal infix fun Short.shr(other: Int): Short = (this.toInt() shr other).toShort()

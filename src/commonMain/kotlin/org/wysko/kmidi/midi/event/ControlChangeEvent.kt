@@ -29,5 +29,5 @@ public data class ControlChangeEvent(
     override val tick: Int,
     override val channel: Byte,
     val controller: Byte,
-    val value: Byte
+    val value: Byte,
 ) : MidiEvent(tick, channel)

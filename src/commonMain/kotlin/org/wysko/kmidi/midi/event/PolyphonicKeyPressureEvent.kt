@@ -28,5 +28,5 @@ public data class PolyphonicKeyPressureEvent(
     override val tick: Int,
     override val channel: Byte,
     val note: Byte,
-    val pressure: Byte
+    val pressure: Byte,
 ) : MidiEvent(tick, channel)

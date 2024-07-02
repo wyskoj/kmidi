@@ -25,7 +25,7 @@ package org.wysko.kmidi.midi.event
  */
 public data class SysexEvent(
     override val tick: Int,
-    val data: ByteArray
+    val data: ByteArray,
 ) : Event(tick) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

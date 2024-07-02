@@ -25,5 +25,5 @@ package org.wysko.kmidi.midi.event
 public data class ProgramEvent(
     override val tick: Int,
     override val channel: Byte,
-    val program: Byte
+    val program: Byte,
 ) : MidiEvent(tick, channel)

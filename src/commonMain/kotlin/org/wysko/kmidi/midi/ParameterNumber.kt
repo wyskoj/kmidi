@@ -6,7 +6,10 @@ package org.wysko.kmidi.midi
  * @property lsb The least significant byte of the PN.
  * @property msb The most significant byte of the PN.
  */
-public sealed class ParameterNumber protected constructor(public open val lsb: Byte, public open val msb: Byte) {
+public sealed class ParameterNumber protected constructor(
+    public open val lsb: Byte,
+    public open val msb: Byte,
+) {
     public companion object {
         /**
          * Creates a [ParameterNumber] from the given least and most significant bytes.
@@ -15,18 +18,23 @@ public sealed class ParameterNumber protected constructor(public open val lsb: B
          * @param msb The most significant byte of the PN.
          * @return A [ParameterNumber] that corresponds to the given bytes.
          */
-        public fun from(lsb: Byte, msb: Byte): ParameterNumber = when (msb) {
-            0x0.toByte() -> when (lsb) {
-                0x0.toByte() -> RegisteredParameterNumber.PitchBendSensitivity
-                0x1.toByte() -> RegisteredParameterNumber.FineTuning
-                0x2.toByte() -> RegisteredParameterNumber.CoarseTuning
-                0x5.toByte() -> RegisteredParameterNumber.ModulationDepthRange
+        public fun from(
+            lsb: Byte,
+            msb: Byte,
+        ): ParameterNumber =
+            when (msb) {
+                0x0.toByte() ->
+                    when (lsb) {
+                        0x0.toByte() -> RegisteredParameterNumber.PitchBendSensitivity
+                        0x1.toByte() -> RegisteredParameterNumber.FineTuning
+                        0x2.toByte() -> RegisteredParameterNumber.CoarseTuning
+                        0x5.toByte() -> RegisteredParameterNumber.ModulationDepthRange
+                        else -> NonRegisteredParameterNumber(lsb, msb)
+                    }
+
+                0x7F.toByte() -> RegisteredParameterNumber.Null
                 else -> NonRegisteredParameterNumber(lsb, msb)
             }
-
-            0x7F.toByte() -> RegisteredParameterNumber.Null
-            else -> NonRegisteredParameterNumber(lsb, msb)
-        }
     }
 }
 
@@ -37,9 +45,10 @@ public sealed class ParameterNumber protected constructor(public open val lsb: B
  * @property msb The most significant byte of the RPN.
  */
 @Suppress("MagicNumber")
-public sealed class RegisteredParameterNumber(public override val lsb: Byte, public override val msb: Byte) :
-    ParameterNumber(lsb, msb) {
-
+public sealed class RegisteredParameterNumber(
+    public override val lsb: Byte,
+    public override val msb: Byte,
+) : ParameterNumber(lsb, msb) {
     /**
      * Sets the sensitivity of Pitch Bend.
      *
@@ -91,8 +100,10 @@ public sealed class RegisteredParameterNumber(public override val lsb: Byte, pub
  * @property lsb The least significant byte of the NRPN.
  * @property msb The most significant byte of the NRPN.
  */
-public data class NonRegisteredParameterNumber(override val lsb: Byte, override val msb: Byte) :
-    ParameterNumber(lsb, msb)
+public data class NonRegisteredParameterNumber(
+    override val lsb: Byte,
+    override val msb: Byte,
+) : ParameterNumber(lsb, msb)
 
 /**
  * A value for a [ParameterNumber].
@@ -100,4 +111,7 @@ public data class NonRegisteredParameterNumber(override val lsb: Byte, override 
  * @property msb The most significant byte of the value.
  * @property lsb The least significant byte of the value.
  */
-public data class RpnValue(public val msb: Byte, public val lsb: Byte)
+public data class RpnValue(
+    public val msb: Byte,
+    public val lsb: Byte,
+)

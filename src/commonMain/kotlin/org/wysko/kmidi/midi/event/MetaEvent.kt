@@ -29,8 +29,9 @@ private const val SECONDS_PER_MINUTE = 60
 /**
  * An [Event] that specifies non-MIDI information useful to this format or to sequencers.
  */
-public sealed class MetaEvent(override val tick: Int) : Event(tick) {
-
+public sealed class MetaEvent(
+    override val tick: Int,
+) : Event(tick) {
     /**
      * Specifies the number of a sequence.
      *
@@ -38,14 +39,19 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      *
      * @property number The sequence number.
      */
-    public data class SequenceNumber(val number: Short) : MetaEvent(0)
+    public data class SequenceNumber(
+        val number: Short,
+    ) : MetaEvent(0)
 
     /**
      * Any amount of text describing anything.
      *
      * @property text The text.
      */
-    public data class Text(override val tick: Int, val text: String) : MetaEvent(tick)
+    public data class Text(
+        override val tick: Int,
+        val text: String,
+    ) : MetaEvent(tick)
 
     /**
      * A copyright notice. The notice should contain the characters (C), the year of
@@ -55,7 +61,9 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      *
      * @property text The copyright notice.
      */
-    public data class CopyrightNotice(val text: String) : MetaEvent(0)
+    public data class CopyrightNotice(
+        val text: String,
+    ) : MetaEvent(0)
 
     /**
      * If in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -66,23 +74,30 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      *
      * @property text The name of the sequence or track.
      */
-    public data class SequenceTrackName(val text: String) : MetaEvent(0)
+    public data class SequenceTrackName(
+        val text: String,
+    ) : MetaEvent(0)
 
     /**
-     * A description of the type of instrumentation to be used in that track.
+     * A description of the instrumentation to be used in that track.
      *
      * *This event can only occur at the beginning of a track.*
      *
      * @property text The name of the instrument.
      */
-    public data class InstrumentName(val text: String) : MetaEvent(0)
+    public data class InstrumentName(
+        val text: String,
+    ) : MetaEvent(0)
 
     /**
-     * A lyric to be sung. Generally, each syllable will be a separate lyric event which begins at the event's time.
+     * A lyric to be sung. Generally, each syllable will be a separate lyric event that begins at the event's time.
      *
      * @property text The lyric text.
      */
-    public data class Lyric(override val tick: Int, val text: String) : MetaEvent(tick)
+    public data class Lyric(
+        override val tick: Int,
+        val text: String,
+    ) : MetaEvent(tick)
 
     /**
      * Normally in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -91,7 +106,10 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      *
      * @property text The name of the marker.
      */
-    public data class Marker(override val tick: Int, val text: String) : MetaEvent(tick)
+    public data class Marker(
+        override val tick: Int,
+        val text: String,
+    ) : MetaEvent(tick)
 
     /**
      * A description of something happening on a film or video screen or stage at that point in the musical score
@@ -99,18 +117,26 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      *
      * @property text The cue point text.
      */
-    public data class CuePoint(override val tick: Int, val text: String) : MetaEvent(tick)
+    public data class CuePoint(
+        override val tick: Int,
+        val text: String,
+    ) : MetaEvent(tick)
 
     /**
-     * The MIDI channel (0-15) contained in this event may be used to associate a MIDI channel with all events
-     * which follow, including [System exclusive][SysexEvent] and [meta-events][MetaEvent]. This channel is "effective"
-     * until the next normal MIDI event (which contains a channel) or the next MIDI Channel Prefix meta-event. If MIDI
-     * channels refer to "tracks", this message may be put into a [format 0][StandardMidiFile.Header.Format.Format0]
-     * file, keeping their non-MIDI data associated with a track.
+     * The MIDI channel (0-15) contained in this event may be used to associate a MIDI channel with all events that
+     * follow, including [System exclusive][SysexEvent] and [meta-events][MetaEvent].
+     * This channel is "effective" until the next normal MIDI event (which contains a channel) or the next MIDI Channel
+     * Prefix meta-event.
+     * If MIDI channels refer to "tracks", this message may be put into a
+     * [format 0][StandardMidiFile.Header.Format.Format0] file,
+     * keeping their non-MIDI data associated with a track.
      *
      * @property channel The channel.
      */
-    public data class ChannelPrefix(override val tick: Int, val channel: Byte) : MetaEvent(tick) {
+    public data class ChannelPrefix(
+        override val tick: Int,
+        val channel: Byte,
+    ) : MetaEvent(tick) {
         init {
             require(channel in 0..MAX_MIDI_CHANNEL) { "Invalid channel: $channel" }
         }
@@ -119,14 +145,19 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
     /**
      * End of track.
      */
-    public data class EndOfTrack(override val tick: Int) : MetaEvent(tick)
+    public data class EndOfTrack(
+        override val tick: Int,
+    ) : MetaEvent(tick)
 
     /**
      * Indicates a tempo change.
      *
      * @property tempo The new tempo, expressed in microseconds per MIDI quarter-note.
      */
-    public data class SetTempo(override val tick: Int, val tempo: Int) : MetaEvent(tick) {
+    public data class SetTempo(
+        override val tick: Int,
+        val tempo: Int,
+    ) : MetaEvent(tick) {
         /** Returns this tempo's value as expressed in beats per minute. */
         val beatsPerMinute: Double = MICROSECONDS_PER_MINUTE / tempo
 
@@ -143,7 +174,9 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      *
      * @param timecode The [SmpteTimecode] at which the track chunk is supposed to start.
      */
-    public data class SmpteOffset(val timecode: SmpteTimecode) : MetaEvent(0)
+    public data class SmpteOffset(
+        val timecode: SmpteTimecode,
+    ) : MetaEvent(0)
 
     /**
      * Time signature is expressed as four numbers. The first two indicate the numerator and the denominator of the
@@ -161,7 +194,7 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
         val numerator: Byte,
         val denominator: Byte,
         val clocksInMetronomeClick: Byte,
-        val thirtySecondNotesInMidiQuarterNote: Byte
+        val thirtySecondNotesInMidiQuarterNote: Byte,
     ) : MetaEvent(tick)
 
     /**
@@ -170,13 +203,18 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      * @property key The [Key].
      * @property scale The [Scale].
      */
-    public data class KeySignature(override val tick: Int, val key: Key, val scale: Scale) : MetaEvent(tick) {
-
+    public data class KeySignature(
+        override val tick: Int,
+        val key: Key,
+        val scale: Scale,
+    ) : MetaEvent(tick) {
         /**
          * The key of the [KeySignature].
          */
         @Suppress("MagicNumber")
-        public enum class Key(private val value: Int) {
+        public enum class Key(
+            private val value: Int,
+        ) {
             /** Key of C♭. */
             CFlat(-7),
 
@@ -220,29 +258,35 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
             FSharp(6),
 
             /** Key of C♯. */
-            CSharp(7);
+            CSharp(7),
+            ;
 
             internal companion object {
-                fun fromValue(value: Byte): Key = entries.firstOrNull {
-                    it.value == value.toInt()
-                } ?: throw IllegalArgumentException("Invalid key value: $value")
+                fun fromValue(value: Byte): Key =
+                    entries.firstOrNull {
+                        it.value == value.toInt()
+                    } ?: throw IllegalArgumentException("Invalid key value: $value")
             }
         }
 
         /**
          * The scale of the [KeySignature].
          */
-        public enum class Scale(private val value: Int) {
+        public enum class Scale(
+            private val value: Int,
+        ) {
             /** Major scale. */
             Major(0),
 
             /** Minor scale. */
-            Minor(1);
+            Minor(1),
+            ;
 
             internal companion object {
-                fun fromValue(value: Byte): Scale = entries.firstOrNull {
-                    it.value == value.toInt()
-                } ?: throw IllegalArgumentException("Invalid scale value: $value")
+                fun fromValue(value: Byte): Scale =
+                    entries.firstOrNull {
+                        it.value == value.toInt()
+                    } ?: throw IllegalArgumentException("Invalid scale value: $value")
             }
         }
     }
@@ -256,7 +300,10 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
      *
      * @property data The data.
      */
-    public data class SequencerSpecific(override val tick: Int, val data: ByteArray) : MetaEvent(tick) {
+    public data class SequencerSpecific(
+        override val tick: Int,
+        val data: ByteArray,
+    ) : MetaEvent(tick) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -279,7 +326,11 @@ public sealed class MetaEvent(override val tick: Int) : Event(tick) {
     /**
      * A meta-event that is not recognized by this library.
      */
-    public data class Unknown(override val tick: Int, val metaType: Byte, val data: ByteArray) : Event(tick) {
+    public data class Unknown(
+        override val tick: Int,
+        val metaType: Byte,
+        val data: ByteArray,
+    ) : Event(tick) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false

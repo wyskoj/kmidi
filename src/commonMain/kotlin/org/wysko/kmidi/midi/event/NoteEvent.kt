@@ -25,9 +25,8 @@ package org.wysko.kmidi.midi.event
 public sealed class NoteEvent(
     override val tick: Int,
     override val channel: Byte,
-    public open val note: Byte
+    public open val note: Byte,
 ) : MidiEvent(tick, channel) {
-
     /**
      * Signals a note should begin playing.
      *
@@ -42,7 +41,7 @@ public sealed class NoteEvent(
         override val tick: Int,
         override val channel: Byte,
         override val note: Byte,
-        val velocity: Byte
+        val velocity: Byte,
     ) : NoteEvent(tick, channel, note) {
         init {
             require(velocity > 0.toByte()) { "Velocity must be greater than 0." }
@@ -55,7 +54,7 @@ public sealed class NoteEvent(
     public data class NoteOff(
         override val tick: Int,
         override val channel: Byte,
-        override val note: Byte
+        override val note: Byte,
     ) : NoteEvent(tick, channel, note)
 
     public companion object {

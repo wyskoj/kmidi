@@ -1,11 +1,19 @@
+import org.junit.Before
 import org.wysko.kmidi.midi.StandardMidiFileReader
 import org.wysko.kmidi.midi.TimeBasedSequence.Companion.toTimeBasedSequence
 import kotlin.test.Test
 
 class ArcTest {
+    private lateinit var reader: StandardMidiFileReader
+
+    @Before
+    fun setUp() {
+        reader = StandardMidiFileReader()
+    }
+
     @Test
     fun `Test arcs from notes`() {
-        val smf = StandardMidiFileReader.readByteArray(SmfExamples.example1)
+        val smf = reader.readByteArray(SmfExamples.example1)
         val sequence = smf.toTimeBasedSequence()
         val arcs = sequence.convertArcsToTimedArcs(smf.tracks.single().arcs)
 

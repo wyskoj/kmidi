@@ -65,7 +65,7 @@ public data class StandardMidiFile(
         val division: Division
     ) {
         init {
-            require(chunkType == "MThd") {
+            require(chunkType == HEADER_MAGIC) {
                 "Invalid header chunk type: $chunkType"
             }
         }
@@ -149,6 +149,10 @@ public data class StandardMidiFile(
                 }
             }
         }
+
+        internal companion object {
+            const val HEADER_MAGIC = "MThd"
+        }
     }
 
     /**
@@ -166,7 +170,6 @@ public data class StandardMidiFile(
          * @see MetaEvent.SequenceTrackName
          */
         val name: String? = events.filterIsInstance<MetaEvent.SequenceTrackName>().firstOrNull()?.text
-
 
         /**
          * Returns the [NoteEvent]s in the list of [Event]s.

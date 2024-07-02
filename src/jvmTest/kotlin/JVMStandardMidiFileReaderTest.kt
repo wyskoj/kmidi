@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import org.junit.Before
 import org.wysko.kmidi.midi.StandardMidiFileReader
 import org.wysko.kmidi.readFile
 import org.wysko.kmidi.readInputStream
@@ -25,22 +26,29 @@ import kotlin.test.assertFails
 import kotlin.test.fail
 
 class JVMStandardMidiFileReaderTest {
+    private lateinit var reader: StandardMidiFileReader
+
+    @Before
+    fun setUp() {
+        reader = StandardMidiFileReader()
+    }
+
     @Test
     fun `Test parse file`() {
-        StandardMidiFileReader.readFile(File("src/jvmTest/resources/test_midi/bus_driver.mid"))
+        reader.readFile(File("src/jvmTest/resources/test_midi/bus_driver.mid"))
     }
 
     @Test
     fun `Test parse file with input stream`() {
         JVMStandardMidiFileReaderTest::class.java.getResourceAsStream("/test_midi/bus_driver.mid")?.let {
-            StandardMidiFileReader.readInputStream(it)
+            reader.readInputStream(it)
         } ?: fail("Could not find resource")
     }
 
     @Test
     fun `Test track names`() {
         val stream = JVMStandardMidiFileReaderTest::class.java.getResourceAsStream("/test_midi/bus_driver.mid")
-        val midiFile = stream?.let { StandardMidiFileReader.readInputStream(it) } ?: fail("Could not find resource")
+        val midiFile = stream?.let { reader.readInputStream(it) } ?: fail("Could not find resource")
 
         assertEquals(
             listOf(
@@ -54,14 +62,14 @@ class JVMStandardMidiFileReaderTest {
                 "tenor sax",
                 "tenor sax #2",
             ),
-            midiFile.tracks.mapNotNull { it.name }
+            midiFile.tracks.mapNotNull { it.name },
         )
     }
 
     @Test
     fun `Test parse and fail non-MIDI file`() {
         assertFails {
-            StandardMidiFileReader.readFile(File("src/jvmTest/resources/test_midi/example.txt"))
+            reader.readFile(File("src/jvmTest/resources/test_midi/example.txt"))
         }
     }
 }

@@ -57,7 +57,7 @@ class StandardMidiFileReaderTest {
 
     @Test
     fun testParseExample() {
-        val smf = StandardMidiFileReader.readByteArray(SmfExamples.example1)
+        val smf = StandardMidiFileReader().readByteArray(SmfExamples.example1)
         assertEquals(smfExpected1, smf)
     }
 }

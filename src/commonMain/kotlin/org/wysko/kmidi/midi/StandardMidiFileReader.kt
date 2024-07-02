@@ -19,6 +19,7 @@ package org.wysko.kmidi.midi
 
 import org.wysko.kmidi.ArrayInputStream
 import org.wysko.kmidi.SmpteTimecode
+import org.wysko.kmidi.midi.InvalidHeaderException.HeaderExceptionType.*
 import org.wysko.kmidi.midi.event.ChannelPressureEvent
 import org.wysko.kmidi.midi.event.ControlChangeEvent
 import org.wysko.kmidi.midi.event.Event
@@ -46,8 +47,7 @@ private const val STATUS_MASK: Byte = 0b1111_0000.toByte()
  * Parses a Standard MIDI file.
  */
 @Suppress("CyclomaticComplexMethod", "LongMethod")
-public object StandardMidiFileReader {
-
+public class StandardMidiFileReader {
     /**
      * Parses a [ByteArray] of a Standard MIDI file.
      *
@@ -62,23 +62,14 @@ public object StandardMidiFileReader {
     }
 
     private fun readHeader(stream: ArrayInputStream): StandardMidiFile.Header {
-        // Read the chunk type
         val chunkType = stream.readNBytes(CHUNK_TYPE_LENGTH).decodeToString()
-        require(chunkType == "MThd") {
-            "Invalid header chunk type: $chunkType"
-        }
+        if (chunkType != StandardMidiFile.Header.HEADER_MAGIC) throw InvalidHeaderException(MissingHeader)
 
-        // Read the length
         val length = stream.readDWord()
-        require(length >= SMF_HEADER_LENGTH) {
-            "Invalid header length: $length"
-        }
+        if (length < SMF_HEADER_LENGTH) throw InvalidHeaderException(InvalidHeaderLength(length))
 
-        // Read the format
         val format = stream.readWord()
-        require(format in 0..2) {
-            "Invalid SMF format value: $format"
-        }
+        if (format !in 0..2) throw InvalidHeaderException(InvalidFormat(format))
 
         val trackCount = stream.readWord()
 

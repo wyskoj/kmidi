@@ -17,6 +17,7 @@
 
 package org.wysko.kmidi
 
+import org.wysko.kmidi.midi.UnexpectedEndOfFileException
 import org.wysko.kmidi.util.shl
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -26,7 +27,7 @@ internal class ArrayInputStream(private val bytes: ByteArray) {
     var position = 0
         private set
 
-    fun read(): Byte = if (position < bytes.size) bytes[position++] else throw EOFException
+    fun read(): Byte = if (position < bytes.size) bytes[position++] else throw UnexpectedEndOfFileException()
 
     fun readWord(): Short = (read().toShort() shl 8) or read()
 

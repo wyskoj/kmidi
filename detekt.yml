@@ -12,5 +12,7 @@ style:
       - '1'
       - '2'
       - '8'
+  ThrowsCount:
+    active: false
   WildcardImport:
     active: false

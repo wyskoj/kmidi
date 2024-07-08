@@ -43,6 +43,8 @@ public object Polyphony {
     }
 
     private fun buildPolyphonyIndex(noteEvents: List<NoteEvent>): Map<Pair<Int, Int>, Int> {
+        if (noteEvents.isEmpty()) return emptyMap()
+
         val events = noteEvents.sortedBy { it.tick }
         val polyphonyIndex = mutableMapOf<Pair<Int, Int>, Int>()
 

@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
+package org.wysko.kmidi.midi
+
 import org.junit.Before
-import org.wysko.kmidi.midi.StandardMidiFileReader
 import org.wysko.kmidi.readFile
 import org.wysko.kmidi.readInputStream
 import java.io.File

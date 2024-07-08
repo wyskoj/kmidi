@@ -1,5 +1,6 @@
+package org.wysko.kmidi.midi
+
 import org.junit.Before
-import org.wysko.kmidi.midi.StandardMidiFileReader
 import org.wysko.kmidi.midi.TimeBasedSequence.Companion.toTimeBasedSequence
 import kotlin.test.Test
 

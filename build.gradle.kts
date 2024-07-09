@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "org.wysko"
-version = "0.0.5"
+version = "0.0.6"
 
 repositories {
     mavenCentral()
@@ -53,13 +53,13 @@ publishing {
                 tasks.register("${name}JavadocJar", Jar::class) {
                     archiveClassifier.set("javadoc")
                     archiveAppendix.set(this@withType.name)
-                }
+                },
             )
 
             pom {
                 name.set("kmidi")
                 description.set(
-                    "A pragmatic, Kotlin Multiplatform library for parsing, building, and analyzing MIDI files."
+                    "A pragmatic, Kotlin Multiplatform library for parsing, building, and analyzing MIDI files.",
                 )
                 url.set("https://github.com/wyskoj/kmidi")
 
@@ -98,7 +98,7 @@ signing {
     useInMemoryPgpKeys(
         System.getenv("OSSRH_GPG_SECRET_KEY_ID"),
         System.getenv("OSSRH_GPG_SECRET_KEY"),
-        System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD")
+        System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD"),
     )
     sign(publishing.publications)
 }

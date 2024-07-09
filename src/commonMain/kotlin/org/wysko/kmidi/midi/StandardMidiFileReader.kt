@@ -22,10 +22,16 @@ import org.wysko.kmidi.SmpteTimecode
 import org.wysko.kmidi.midi.InvalidHeaderException.HeaderExceptionType.InvalidFormat
 import org.wysko.kmidi.midi.InvalidHeaderException.HeaderExceptionType.InvalidHeaderLength
 import org.wysko.kmidi.midi.InvalidHeaderException.HeaderExceptionType.MissingHeader
+import org.wysko.kmidi.midi.StandardMidiFileReader.Policies
+import org.wysko.kmidi.midi.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy
+import org.wysko.kmidi.midi.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowClean
+import org.wysko.kmidi.midi.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowDirty
+import org.wysko.kmidi.midi.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.Disallow
 import org.wysko.kmidi.midi.event.ChannelPressureEvent
 import org.wysko.kmidi.midi.event.ControlChangeEvent
 import org.wysko.kmidi.midi.event.Event
 import org.wysko.kmidi.midi.event.MetaEvent
+import org.wysko.kmidi.midi.event.MetaEvent.KeySignature
 import org.wysko.kmidi.midi.event.MetaEvent.KeySignature.Scale
 import org.wysko.kmidi.midi.event.MidiConstants.ChannelVoiceMessages
 import org.wysko.kmidi.midi.event.MidiConstants.MetaEvents
@@ -39,17 +45,134 @@ import org.wysko.kmidi.util.shr
 import kotlin.experimental.and
 import kotlin.experimental.or
 
+private const val META_LENGTH_TIME_SIGNATURE = 4
 private const val CHUNK_TYPE_LENGTH = 4
 private const val SMF_HEADER_LENGTH = 6
 private const val CHANNEL_MASK: Byte = 0b0000_1111
 private const val IS_STATUS_MASK: Byte = 0b1000_0000.toByte()
 private const val STATUS_MASK: Byte = 0b1111_0000.toByte()
+private const val SEVEN_BIT_MAX = 127
+private val SEVEN_BIT_RANGE = 0..SEVEN_BIT_MAX
 
 /**
  * Parses a Standard MIDI file.
+ *
+ * Some reading behavior can be controlled by specifying [policies].
+ *
+ * @property policies The policies to use when reading the file.
+ * @see Policies
  */
 @Suppress("CyclomaticComplexMethod", "LongMethod")
-public class StandardMidiFileReader {
+public class StandardMidiFileReader(
+    private val policies: Policies = Policies.lenient,
+) {
+    /**
+     * Policies that control the behavior of the reader.
+     *
+     * @property allowRunningStatusAcrossNonMidiEvents
+     * Whether to allow running status to be used across non-MIDI events.
+     * The Standard MIDI File Specification 1.0 states that "Sysex events and meta-events cancel any running status
+     * which was in effect."
+     * However, some MIDI files may not follow this rule.
+     * When `true`, running status is preserved if a sysex or meta-event occurs.
+     * Otherwise, the running status is reset and input may be garbled.
+     *
+     * @property allowTrackCountDiscrepancy
+     * Whether to allow a discrepancy between the number of tracks specified in the header and the number of tracks
+     * actually present in the file.
+     * If `true` and a discrepancy is found, the reader will create empty tracks to match the number specified in the
+     * header.
+     *
+     * @property coerceVelocityToRange
+     * Whether to coerce the unsigned velocity value of a [NoteEvent.NoteOn] event to be within the range of 0 to 127.
+     *
+     * @property ignoreBadChannelPrefixes
+     * Whether to ignore bad channel prefixes.
+     * The Standard MIDI File Specification 1.0 provides a list of valid channels (0-15).
+     * However, a MIDI file could contain an invalid value.
+     * If `true`, the reader will ignore (throw out) bad [MetaEvent.ChannelPrefix] events.
+     * Otherwise, an exception is thrown.
+     *
+     * @property ignoreBadKeySignatures
+     * Whether to ignore bad key signatures.
+     * The Standard MIDI File Specification 1.0 provides a list of valid keys and scales.
+     * However, a MIDI file could contain an invalid value.
+     * If `true`, the reader will ignore (throw out) bad [MetaEvent.KeySignature] events.
+     * Otherwise, an exception is thrown.
+     *
+     * @property ignoreIncompleteMetaEvents
+     * It is possible for a meta-event to be incomplete, i.e., the length of the event is less than the SMF
+     * specification.
+     * If `true`, meta-events that don't have enough bytes (but correctly have enough bytes to satisfy their
+     * declaration) are ignored.
+     * (For example, the SMF specification specifies that [MetaEvent.TimeSignature] events are four bytes long,
+     * but it is possible for this meta-event to only have two bytes.)
+     *
+     * @property unexpectedEndOfFilePolicy How to handle an [UnexpectedEndOfFileException].
+     *
+     * @see UnexpectedEndOfFileExceptionPolicy
+     */
+    public data class Policies(
+        val allowRunningStatusAcrossNonMidiEvents: Boolean,
+        val allowTrackCountDiscrepancy: Boolean,
+        val coerceVelocityToRange: Boolean,
+        val ignoreBadChannelPrefixes: Boolean,
+        val ignoreBadKeySignatures: Boolean,
+        val ignoreIncompleteMetaEvents: Boolean,
+        val unexpectedEndOfFilePolicy: UnexpectedEndOfFileExceptionPolicy,
+    ) {
+        public companion object {
+            /**
+             * A set of policies that are lenient and allow for some discrepancies in the file.
+             */
+            public val lenient: Policies =
+                Policies(
+                    allowRunningStatusAcrossNonMidiEvents = true,
+                    allowTrackCountDiscrepancy = true,
+                    coerceVelocityToRange = true,
+                    ignoreBadChannelPrefixes = true,
+                    ignoreBadKeySignatures = true,
+                    ignoreIncompleteMetaEvents = true,
+                    unexpectedEndOfFilePolicy = AllowDirty,
+                )
+
+            /**
+             * A set of policies that are strict and do not allow for any discrepancies in the file.
+             */
+            public val strict: Policies =
+                Policies(
+                    allowRunningStatusAcrossNonMidiEvents = false,
+                    allowTrackCountDiscrepancy = false,
+                    coerceVelocityToRange = false,
+                    ignoreBadChannelPrefixes = false,
+                    ignoreBadKeySignatures = false,
+                    ignoreIncompleteMetaEvents = false,
+                    unexpectedEndOfFilePolicy = Disallow,
+                )
+        }
+
+        /**
+         * Policies that control the behavior of the reader when an [UnexpectedEndOfFileException] is thrown.
+         */
+        public sealed class UnexpectedEndOfFileExceptionPolicy {
+            /**
+             * Consume [UnexpectedEndOfFileException] and return all read data if the exception is thrown after an
+             * event has been fully read.
+             */
+            public data object AllowClean : UnexpectedEndOfFileExceptionPolicy()
+
+            /**
+             * Consume [UnexpectedEndOfFileException] if the exception is thrown after an event has been partially read.
+             */
+            public data object AllowDirty : UnexpectedEndOfFileExceptionPolicy()
+
+            /**
+             * Do not consume [UnexpectedEndOfFileException] and throw it.
+             */
+            public data object Disallow : UnexpectedEndOfFileExceptionPolicy()
+        }
+    }
+
     /**
      * Parses a [ByteArray] of a Standard MIDI file.
      *
@@ -84,7 +207,7 @@ public class StandardMidiFileReader {
                 )
             } else {
                 StandardMidiFile.Header.Division.TimecodeBasedTime(
-                    framesPerSecond = (timeDivision and 0x7F00.toShort()) shr 8,
+                    framesPerSecond = (timeDivision and 0xFF00.toShort()) shr 8,
                     ticksPerFrame = timeDivision and 0x00FF.toShort(),
                 )
             }
@@ -106,117 +229,161 @@ public class StandardMidiFileReader {
     ): List<StandardMidiFile.Track> {
         val tracks = mutableListOf<StandardMidiFile.Track>()
 
-        repeat(header.trackCount.toInt()) {
-            val trackType = stream.readNBytes(CHUNK_TYPE_LENGTH).decodeToString()
-            val trackLength = stream.readDWord()
+        for (i in 0..<header.trackCount.toInt()) {
+            var time = 0
+            var prefix: Byte = 0
+            var bytesRead = 0
+            val events = mutableListOf<Event>()
 
-            if (trackType != "MTrk") {
-                // Skip the chunk, as it is not a track
-                stream.skip(trackLength)
-            } else {
-                var time = 0
-                var prefix: Byte = 0
-                var bytesRead = 0
-                val events = mutableListOf<Event>()
+            try {
+                val trackType = stream.readNBytes(CHUNK_TYPE_LENGTH).decodeToString()
+                val trackLength = stream.readDWord()
 
-                while (bytesRead < trackLength) {
-                    val startingPosition = stream.position
-                    var data1: Byte = -1
-                    var data2: Byte
+                if (trackType != "MTrk") {
+                    // Skip the chunk, as it is not a track
+                    stream.skip(trackLength)
+                } else {
+                    while (bytesRead < trackLength) {
+                        // Some MIDI files have a trailing 0x00 byte, which should be ignored
+                        val isTrailingNullByte = trackLength - bytesRead == 1 && stream.read() == 0.toByte()
+                        // If there are no more events and policy allows, exit gracefully
+                        val noMoreEventsAndPolicyAllows =
+                            stream.available == 0 && policies.unexpectedEndOfFilePolicy == AllowClean
 
-                    // Read the delta time
-                    val (deltaTime, _) = stream.readVlq()
-                    time += deltaTime
-
-                    // Read the status byte
-                    val statusByte = stream.read()
-                    if (statusByte and IS_STATUS_MASK != 0.toByte()) {
-                        prefix = statusByte
-                    } else {
-                        data1 = statusByte
-                    }
-
-                    // Separate channel and prefix
-                    val status = prefix and STATUS_MASK
-                    val channel = prefix and CHANNEL_MASK
-
-                    when {
-                        status == ChannelVoiceMessages.NOTE_OFF_EVENT -> {
-                            data1 = readDataByte(data1, stream)
-                            stream.read() // Skip the velocity
-                            events += NoteEvent.NoteOff(time, channel, data1)
+                        if (isTrailingNullByte || noMoreEventsAndPolicyAllows) {
+                            break
                         }
 
-                        status == ChannelVoiceMessages.NOTE_ON_EVENT -> {
-                            val bytes = readTwoDataBytes(data1, stream)
-                            data1 = bytes.first
-                            data2 = bytes.second
+                        val startingPosition = stream.position
+                        var data1: Byte = -1
+                        var data2: Byte
 
-                            // If the velocity is 0, it should be treated as a NoteOff event
-                            if (data2 == 0.toByte()) {
-                                events += NoteEvent.NoteOff(time, channel, note = data1)
-                            } else {
-                                events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
+                        // Read the delta time
+                        val (deltaTime, _) = stream.readVlq()
+                        time += deltaTime
+
+                        // Read the status byte
+                        val lastPrefix = prefix
+                        val statusByte = stream.read()
+                        if (statusByte and IS_STATUS_MASK != 0.toByte()) {
+                            prefix = statusByte
+                        } else {
+                            data1 = statusByte
+                        }
+
+                        // Separate channel and prefix
+                        val status = prefix and STATUS_MASK
+                        val channel = prefix and CHANNEL_MASK
+
+                        when {
+                            status == ChannelVoiceMessages.NOTE_OFF_EVENT -> {
+                                data1 = readDataByte(data1, stream)
+                                stream.read() // Skip the velocity
+                                events += NoteEvent.NoteOff(time, channel, data1)
+                            }
+
+                            status == ChannelVoiceMessages.NOTE_ON_EVENT -> {
+                                val bytes = readTwoDataBytes(data1, stream)
+                                data1 = bytes.first
+                                data2 = bytes.second
+
+                                if (policies.coerceVelocityToRange) {
+                                    data2 =
+                                        data2
+                                            .toUByte()
+                                            .toInt()
+                                            .coerceIn(SEVEN_BIT_RANGE)
+                                            .toByte()
+                                }
+
+                                // If the velocity is 0, it should be treated as a NoteOff event
+                                if (data2 == 0.toByte()) {
+                                    events += NoteEvent.NoteOff(time, channel, note = data1)
+                                } else {
+                                    events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
+                                }
+                            }
+
+                            status == ChannelVoiceMessages.POLYPHONIC_KEY_PRESSURE -> {
+                                val bytes = readTwoDataBytes(data1, stream)
+                                data1 = bytes.first
+                                data2 = bytes.second
+                                events += PolyphonicKeyPressureEvent(time, channel, note = data1, pressure = data2)
+                            }
+
+                            status == ChannelVoiceMessages.CONTROL_CHANGE -> {
+                                val bytes = readTwoDataBytes(data1, stream)
+                                data1 = bytes.first
+                                data2 = bytes.second
+                                events += ControlChangeEvent(time, channel, controller = data1, value = data2)
+                            }
+
+                            status == ChannelVoiceMessages.PROGRAM_CHANGE -> {
+                                data1 = readDataByte(data1, stream)
+                                events += ProgramEvent(time, channel, program = data1)
+                            }
+
+                            status == ChannelVoiceMessages.CHANNEL_PRESSURE -> {
+                                data1 = readDataByte(data1, stream)
+                                events += ChannelPressureEvent(time, channel, pressure = data1)
+                            }
+
+                            status == ChannelVoiceMessages.PITCH_WHEEL_CHANGE -> {
+                                val bytes = readTwoDataBytes(data1, stream)
+                                data1 = bytes.first
+                                data2 = bytes.second
+                                events +=
+                                    PitchWheelChangeEvent(
+                                        time,
+                                        channel,
+                                        value = (data2.toShort() shl 7) or data1.toShort(),
+                                    )
+                            }
+
+                            status == 0xF0.toByte() && (prefix == 0xF0.toByte() || prefix == 0xF7.toByte()) -> {
+                                // Read the length of the system-exclusive message
+                                val (length, _) = stream.readVlq()
+
+                                // Read the system-exclusive message
+                                val message = stream.readNBytes(length)
+
+                                events += SysexEvent(time, message)
+
+                                if (policies.allowRunningStatusAcrossNonMidiEvents) {
+                                    prefix = lastPrefix
+                                }
+                            }
+
+                            status == 0xF0.toByte() && prefix == 0xFF.toByte() -> {
+                                val metaType = stream.read()
+                                readMetaEvent(stream, time, metaType)?.let { events += it }
+
+                                if (policies.allowRunningStatusAcrossNonMidiEvents) {
+                                    prefix = lastPrefix
+                                }
                             }
                         }
 
-                        status == ChannelVoiceMessages.POLYPHONIC_KEY_PRESSURE -> {
-                            val bytes = readTwoDataBytes(data1, stream)
-                            data1 = bytes.first
-                            data2 = bytes.second
-                            events += PolyphonicKeyPressureEvent(time, channel, note = data1, pressure = data2)
-                        }
-
-                        status == ChannelVoiceMessages.CONTROL_CHANGE -> {
-                            val bytes = readTwoDataBytes(data1, stream)
-                            data1 = bytes.first
-                            data2 = bytes.second
-                            events += ControlChangeEvent(time, channel, controller = data1, value = data2)
-                        }
-
-                        status == ChannelVoiceMessages.PROGRAM_CHANGE -> {
-                            data1 = readDataByte(data1, stream)
-                            events += ProgramEvent(time, channel, program = data1)
-                        }
-
-                        status == ChannelVoiceMessages.CHANNEL_PRESSURE -> {
-                            data1 = readDataByte(data1, stream)
-                            events += ChannelPressureEvent(time, channel, pressure = data1)
-                        }
-
-                        status == ChannelVoiceMessages.PITCH_WHEEL_CHANGE -> {
-                            val bytes = readTwoDataBytes(data1, stream)
-                            data1 = bytes.first
-                            data2 = bytes.second
-                            events +=
-                                PitchWheelChangeEvent(
-                                    time,
-                                    channel,
-                                    value = (data2.toShort() shl 7) or data1.toShort(),
-                                )
-                        }
-
-                        status == 0xF0.toByte() && (prefix == 0xF0.toByte() || prefix == 0xF7.toByte()) -> {
-                            // Read the length of the system-exclusive message
-                            val (length, _) = stream.readVlq()
-
-                            // Read the system-exclusive message
-                            val message = stream.readNBytes(length)
-
-                            events += SysexEvent(time, message)
-                        }
-
-                        status == 0xF0.toByte() && prefix == 0xFF.toByte() -> {
-                            val metaType = stream.read()
-                            val metaEvent = readMetaEvent(stream, time, metaType)
-                            events += metaEvent
-                        }
+                        bytesRead += stream.position - startingPosition
                     }
 
-                    bytesRead += stream.position - startingPosition
+                    tracks += StandardMidiFile.Track(events)
                 }
+            } catch (e: UnexpectedEndOfFileException) {
+                // If the policy allows, return the tracks that have been read
+                if (policies.unexpectedEndOfFilePolicy == AllowDirty) {
+                    tracks += StandardMidiFile.Track(events)
+                    break
+                } else {
+                    throw e
+                }
+            }
+        }
 
-                tracks += StandardMidiFile.Track(events)
+        if (policies.allowTrackCountDiscrepancy) {
+            // Add empty tracks to match the number specified in the header
+            repeat(header.trackCount.toInt() - tracks.size) {
+                tracks += StandardMidiFile.Track(emptyList())
             }
         }
 
@@ -247,17 +414,10 @@ public class StandardMidiFileReader {
         stream: ArrayInputStream,
         time: Int,
         metaType: Byte,
-    ): Event =
+    ): Event? =
         when (metaType) {
             MetaEvents.SEQUENCE_NUMBER -> {
-                val (_, _) = stream.readVlq() // Should always be 2
-                val high = stream.read()
-                val low = stream.read()
-
-                @Suppress("MagicNumber")
-                val sequenceNumber = (high shl 8).toShort() or low.toShort()
-
-                MetaEvent.SequenceNumber(sequenceNumber)
+                readSequenceNumber(stream)
             }
 
             MetaEvents.TEXT_EVENT -> {
@@ -303,57 +463,29 @@ public class StandardMidiFileReader {
             }
 
             MetaEvents.MIDI_CHANNEL_PREFIX -> {
-                val (_, _) = stream.readVlq()
-                val channel = stream.read()
-                MetaEvent.ChannelPrefix(time, channel)
+                readMidiChannelPrefix(stream, time)
             }
 
             MetaEvents.END_OF_TRACK -> {
-                val (_, _) = stream.readVlq()
+                val (length, _) = stream.readVlq()
+                stream.skip(length)
                 MetaEvent.EndOfTrack(time)
             }
 
             MetaEvents.TEMPO -> {
-                val (_, _) = stream.readVlq()
-                val tempo = stream.read24BitInt()
-                MetaEvent.SetTempo(time, tempo)
+                readTempo(stream, time)
             }
 
             MetaEvents.SMPTE_OFFSET -> {
-                val (_, _) = stream.readVlq()
-                val hour = stream.read()
-                val minute = stream.read()
-                val second = stream.read()
-                val frame = stream.read()
-                val subFrame = stream.read()
-                val timecode = SmpteTimecode(hour, minute, second, frame, subFrame)
-                MetaEvent.SmpteOffset(timecode)
+                readSmpteOffset(stream)
             }
 
             MetaEvents.KEY_SIGNATURE -> {
-                val (_, _) = stream.readVlq()
-                val key = stream.read()
-                val scale = stream.read()
-                MetaEvent.KeySignature(
-                    time,
-                    MetaEvent.KeySignature.Key.fromValue(key),
-                    Scale.fromValue(scale),
-                )
+                readKeySignature(stream, time)
             }
 
             MetaEvents.TIME_SIGNATURE -> {
-                val (_, _) = stream.readVlq()
-                val numerator = stream.read()
-                val denominator = stream.read()
-                val clocksInMetronomeClick = stream.read()
-                val thirtySecondNotesInMidiQuarterNote = stream.read()
-                MetaEvent.TimeSignature(
-                    time,
-                    numerator,
-                    denominator,
-                    clocksInMetronomeClick,
-                    thirtySecondNotesInMidiQuarterNote,
-                )
+                readTimeSignature(stream, time)
             }
 
             MetaEvents.SEQUENCER_SPECIFIC_EVENT -> {
@@ -368,4 +500,150 @@ public class StandardMidiFileReader {
                 MetaEvent.Unknown(time, metaType, bytes)
             }
         }
+
+    private fun readTimeSignature(
+        stream: ArrayInputStream,
+        time: Int,
+    ): MetaEvent.TimeSignature? {
+        val (length, _) = stream.readVlq()
+
+        if (length < META_LENGTH_TIME_SIGNATURE) {
+            if (policies.ignoreIncompleteMetaEvents) {
+                return null
+            } else {
+                throw IncompleteMetaEventException(MetaEvent.TimeSignature::class)
+            }
+        }
+
+        val numerator = stream.read()
+        val denominator = stream.read()
+        val clocksInMetronomeClick = stream.read()
+        val thirtySecondNotesInMidiQuarterNote = stream.read()
+        stream.skip(length - META_LENGTH_TIME_SIGNATURE)
+
+        return MetaEvent.TimeSignature(
+            time,
+            numerator,
+            denominator,
+            clocksInMetronomeClick,
+            thirtySecondNotesInMidiQuarterNote,
+        )
+    }
+
+    private fun readKeySignature(
+        stream: ArrayInputStream,
+        time: Int,
+    ): KeySignature? {
+        val (length, _) = stream.readVlq()
+
+        if (length < 2) {
+            if (policies.ignoreIncompleteMetaEvents) {
+                return null
+            } else {
+                throw IncompleteMetaEventException(KeySignature::class)
+            }
+        }
+
+        val key = stream.read()
+        val scale = stream.read()
+        stream.skip(length - 2)
+
+        return try {
+            KeySignature(
+                time,
+                KeySignature.Key.fromValue(key),
+                Scale.fromValue(scale),
+            )
+        } catch (e: IllegalArgumentException) {
+            when {
+                policies.ignoreBadKeySignatures -> null
+                else -> throw e
+            }
+        }
+    }
+
+    private fun readSmpteOffset(stream: ArrayInputStream): MetaEvent.SmpteOffset? {
+        val (length, _) = stream.readVlq()
+
+        if (length < 5) {
+            if (policies.ignoreIncompleteMetaEvents) {
+                return null
+            } else {
+                throw IncompleteMetaEventException(MetaEvent.SmpteOffset::class)
+            }
+        }
+
+        val hour = stream.read()
+        val minute = stream.read()
+        val second = stream.read()
+        val frame = stream.read()
+        val subFrame = stream.read()
+        stream.skip(length - 5)
+
+        return MetaEvent.SmpteOffset(SmpteTimecode(hour, minute, second, frame, subFrame))
+    }
+
+    private fun readTempo(
+        stream: ArrayInputStream,
+        time: Int,
+    ): MetaEvent.SetTempo? {
+        val (length, _) = stream.readVlq()
+
+        if (length < 3) {
+            if (policies.ignoreIncompleteMetaEvents) {
+                return null
+            } else {
+                throw IncompleteMetaEventException(MetaEvent.SetTempo::class)
+            }
+        }
+
+        val tempo = stream.read24BitInt()
+        stream.skip(length - 3)
+
+        return MetaEvent.SetTempo(time, tempo)
+    }
+
+    private fun readMidiChannelPrefix(
+        stream: ArrayInputStream,
+        time: Int,
+    ): MetaEvent.ChannelPrefix? {
+        val (length, _) = stream.readVlq()
+
+        if (length < 1) {
+            if (policies.ignoreIncompleteMetaEvents) {
+                return null
+            } else {
+                throw IncompleteMetaEventException(MetaEvent.ChannelPrefix::class)
+            }
+        }
+
+        val channel = stream.read()
+        stream.skip(length - 1)
+        return try {
+            MetaEvent.ChannelPrefix(time, channel)
+        } catch (e: IllegalArgumentException) {
+            when {
+                policies.ignoreBadChannelPrefixes -> null
+                else -> throw e
+            }
+        }
+    }
+
+    private fun readSequenceNumber(stream: ArrayInputStream): MetaEvent.SequenceNumber? {
+        val (length, _) = stream.readVlq()
+
+        if (length < 2) {
+            if (policies.ignoreIncompleteMetaEvents) {
+                return null
+            } else {
+                throw IncompleteMetaEventException(MetaEvent.SequenceNumber::class)
+            }
+        }
+
+        val high = stream.read()
+        val low = stream.read()
+        stream.skip(length - 2)
+
+        return MetaEvent.SequenceNumber((high shl 8).toShort() or low.toShort())
+    }
 }

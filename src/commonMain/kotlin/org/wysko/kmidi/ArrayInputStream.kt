@@ -29,6 +29,9 @@ internal class ArrayInputStream(
     var position = 0
         private set
 
+    val available: Int
+        get() = bytes.size - position
+
     fun read(): Byte = if (position < bytes.size) bytes[position++] else throw UnexpectedEndOfFileException()
 
     fun readWord(): Short = (read().toShort() shl 8) or read()

@@ -17,7 +17,7 @@ class PolyphonyTest {
         val events =
             listOf(
                 NoteEvent.NoteOn(0, 0, 60, 127),
-                NoteEvent.NoteOff(1, 0, 60),
+                NoteEvent.NoteOff(1, 0, 60, 0),
             )
         val result = Polyphony.calculateMaximumPolyphony(events)
         assertEquals(1, result)
@@ -29,8 +29,8 @@ class PolyphonyTest {
             listOf(
                 NoteEvent.NoteOn(0, 0, 60, 127),
                 NoteEvent.NoteOn(0, 0, 61, 127),
-                NoteEvent.NoteOff(1, 0, 60),
-                NoteEvent.NoteOff(1, 0, 61),
+                NoteEvent.NoteOff(1, 0, 60, 0),
+                NoteEvent.NoteOff(1, 0, 61, 0),
             )
         val result = Polyphony.calculateMaximumPolyphony(events)
         assertEquals(2, result)
@@ -42,8 +42,8 @@ class PolyphonyTest {
             listOf(
                 NoteEvent.NoteOn(0, 0, 60, 127),
                 NoteEvent.NoteOn(1, 0, 61, 127),
-                NoteEvent.NoteOff(2, 0, 60),
-                NoteEvent.NoteOff(3, 0, 61),
+                NoteEvent.NoteOff(2, 0, 60, 0),
+                NoteEvent.NoteOff(3, 0, 61, 0),
             )
         val result = Polyphony.calculateMaximumPolyphony(events)
         assertEquals(2, result)
@@ -61,7 +61,7 @@ class PolyphonyTest {
         val events =
             listOf(
                 NoteEvent.NoteOn(0, 0, 60, 127),
-                NoteEvent.NoteOff(1, 0, 60),
+                NoteEvent.NoteOff(1, 0, 60, 0),
             )
         val result = Polyphony.averagePolyphony(events)
         assertEquals(1.0, result)
@@ -73,8 +73,8 @@ class PolyphonyTest {
             listOf(
                 NoteEvent.NoteOn(0, 0, 60, 127),
                 NoteEvent.NoteOn(0, 0, 61, 127),
-                NoteEvent.NoteOff(1, 0, 60),
-                NoteEvent.NoteOff(1, 0, 61),
+                NoteEvent.NoteOff(1, 0, 60, 0),
+                NoteEvent.NoteOff(1, 0, 61, 0),
             )
         val result = Polyphony.averagePolyphony(events)
         assertEquals(2.0, result)
@@ -86,8 +86,8 @@ class PolyphonyTest {
             listOf(
                 NoteEvent.NoteOn(0, 0, 60, 127),
                 NoteEvent.NoteOn(1, 0, 61, 127),
-                NoteEvent.NoteOff(2, 0, 60),
-                NoteEvent.NoteOff(3, 0, 61),
+                NoteEvent.NoteOff(2, 0, 60, 0),
+                NoteEvent.NoteOff(3, 0, 61, 0),
             )
         val result = Polyphony.averagePolyphony(events)
         assertEquals(4 / 3.0, result, 0.0001)

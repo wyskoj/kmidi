@@ -277,9 +277,10 @@ public class StandardMidiFileReader(
 
                         when {
                             status == ChannelVoiceMessages.NOTE_OFF_EVENT -> {
-                                data1 = readDataByte(data1, stream)
-                                stream.read() // Skip the velocity
-                                events += NoteEvent.NoteOff(time, channel, data1)
+                                val bytes = readTwoDataBytes(data1, stream)
+                                data1 = bytes.first
+                                data2 = bytes.second
+                                events += NoteEvent.NoteOff(time, channel, data1, data2)
                             }
 
                             status == ChannelVoiceMessages.NOTE_ON_EVENT -> {
@@ -298,7 +299,7 @@ public class StandardMidiFileReader(
 
                                 // If the velocity is 0, it should be treated as a NoteOff event
                                 if (data2 == 0.toByte()) {
-                                    events += NoteEvent.NoteOff(time, channel, note = data1)
+                                    events += NoteEvent.NoteOff(time, channel, note = data1, velocity = 0)
                                 } else {
                                     events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
                                 }

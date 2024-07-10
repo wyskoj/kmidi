@@ -21,11 +21,15 @@ package org.wysko.kmidi.midi.event
  * A [NoteOn] or a [NoteOff] event.
  *
  * @property note The key (note) number.
+ * @property velocity The velocity of the note.
+ * In a [NoteOn] event, this is the velocity the note should be played at.
+ * In a [NoteOff] event, this is the velocity the note should be released at.
  */
 public sealed class NoteEvent(
     override val tick: Int,
     override val channel: Byte,
     public open val note: Byte,
+    public open val velocity: Byte,
 ) : MidiEvent(tick, channel) {
     /**
      * Signals a note should begin playing.
@@ -34,15 +38,14 @@ public sealed class NoteEvent(
      * MIDI specification. This library converts such events to NoteOff events and throws an exception if a NoteOn
      * event with a velocity of 0 is encountered.
      *
-     * @property velocity The non-zero velocity of the note.
      * @throws IllegalArgumentException If [velocity] is not greater than 0.
      */
     public data class NoteOn(
         override val tick: Int,
         override val channel: Byte,
         override val note: Byte,
-        val velocity: Byte,
-    ) : NoteEvent(tick, channel, note) {
+        override val velocity: Byte,
+    ) : NoteEvent(tick, channel, note, velocity) {
         init {
             require(velocity > 0.toByte()) { "Velocity must be greater than 0." }
         }
@@ -55,7 +58,8 @@ public sealed class NoteEvent(
         override val tick: Int,
         override val channel: Byte,
         override val note: Byte,
-    ) : NoteEvent(tick, channel, note)
+        override val velocity: Byte,
+    ) : NoteEvent(tick, channel, note, velocity)
 
     public companion object {
         /**

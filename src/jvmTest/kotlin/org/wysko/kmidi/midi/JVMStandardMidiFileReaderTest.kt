@@ -28,10 +28,12 @@ import kotlin.test.fail
 
 class JVMStandardMidiFileReaderTest {
     private lateinit var reader: StandardMidiFileReader
+    private lateinit var writer: StandardMidiFileWriter
 
     @Before
     fun setUp() {
-        reader = StandardMidiFileReader()
+        reader = StandardMidiFileReader(StandardMidiFileReader.Policies.strict)
+        writer = StandardMidiFileWriter()
     }
 
     @Test
@@ -72,5 +74,13 @@ class JVMStandardMidiFileReaderTest {
         assertFails {
             reader.readFile(File("src/jvmTest/resources/test_midi/example.txt"))
         }
+    }
+
+    @Test
+    fun `Test read, write, and re-read MIDI file`() {
+        val smfFromFile = reader.readFile(File("src/jvmTest/resources/test_midi/bus_driver.mid"))
+        val generatedBytes = writer.write(smfFromFile)
+        val siblingSmf = reader.readByteArray(generatedBytes)
+        assertEquals(smfFromFile, siblingSmf)
     }
 }

@@ -28,10 +28,23 @@ private const val SECONDS_PER_MINUTE = 60
 
 /**
  * An [Event] that specifies non-MIDI information useful to this format or to sequencers.
+ *
+ * @property tick The tick at which the event occurs.
  */
+@Suppress("MagicNumber")
 public sealed class MetaEvent(
     override val tick: Int,
+    internal open val type: Byte,
 ) : Event(tick) {
+    /**
+     * An event that contains textual information.
+     *
+     * @property text The text.
+     */
+    public interface Textual {
+        public val text: String
+    }
+
     /**
      * Specifies the number of a sequence.
      *
@@ -41,7 +54,7 @@ public sealed class MetaEvent(
      */
     public data class SequenceNumber(
         val number: Short,
-    ) : MetaEvent(0)
+    ) : MetaEvent(0, 0x00)
 
     /**
      * Any amount of text describing anything.
@@ -50,8 +63,9 @@ public sealed class MetaEvent(
      */
     public data class Text(
         override val tick: Int,
-        val text: String,
-    ) : MetaEvent(tick)
+        override val text: String,
+    ) : MetaEvent(tick, 0x01),
+        Textual
 
     /**
      * A copyright notice. The notice should contain the characters (C), the year of
@@ -62,8 +76,9 @@ public sealed class MetaEvent(
      * @property text The copyright notice.
      */
     public data class CopyrightNotice(
-        val text: String,
-    ) : MetaEvent(0)
+        override val text: String,
+    ) : MetaEvent(0, 0x02),
+        Textual
 
     /**
      * If in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -75,8 +90,9 @@ public sealed class MetaEvent(
      * @property text The name of the sequence or track.
      */
     public data class SequenceTrackName(
-        val text: String,
-    ) : MetaEvent(0)
+        override val text: String,
+    ) : MetaEvent(0, 0x03),
+        Textual
 
     /**
      * A description of the instrumentation to be used in that track.
@@ -86,8 +102,9 @@ public sealed class MetaEvent(
      * @property text The name of the instrument.
      */
     public data class InstrumentName(
-        val text: String,
-    ) : MetaEvent(0)
+        override val text: String,
+    ) : MetaEvent(0, 0x04),
+        Textual
 
     /**
      * A lyric to be sung. Generally, each syllable will be a separate lyric event that begins at the event's time.
@@ -96,8 +113,9 @@ public sealed class MetaEvent(
      */
     public data class Lyric(
         override val tick: Int,
-        val text: String,
-    ) : MetaEvent(tick)
+        override val text: String,
+    ) : MetaEvent(tick, 0x05),
+        Textual
 
     /**
      * Normally in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -108,8 +126,9 @@ public sealed class MetaEvent(
      */
     public data class Marker(
         override val tick: Int,
-        val text: String,
-    ) : MetaEvent(tick)
+        override val text: String,
+    ) : MetaEvent(tick, 0x06),
+        Textual
 
     /**
      * A description of something happening on a film or video screen or stage at that point in the musical score
@@ -119,8 +138,9 @@ public sealed class MetaEvent(
      */
     public data class CuePoint(
         override val tick: Int,
-        val text: String,
-    ) : MetaEvent(tick)
+        override val text: String,
+    ) : MetaEvent(tick, 0x07),
+        Textual
 
     /**
      * The MIDI channel (0-15) contained in this event may be used to associate a MIDI channel with all events that
@@ -136,7 +156,7 @@ public sealed class MetaEvent(
     public data class ChannelPrefix(
         override val tick: Int,
         val channel: Byte,
-    ) : MetaEvent(tick) {
+    ) : MetaEvent(tick, 0x20) {
         init {
             require(channel in 0..MAX_MIDI_CHANNEL) { "Invalid channel: $channel" }
         }
@@ -147,7 +167,7 @@ public sealed class MetaEvent(
      */
     public data class EndOfTrack(
         override val tick: Int,
-    ) : MetaEvent(tick)
+    ) : MetaEvent(tick, 0x2F)
 
     /**
      * Indicates a tempo change.
@@ -157,7 +177,7 @@ public sealed class MetaEvent(
     public data class SetTempo(
         override val tick: Int,
         val tempo: Int,
-    ) : MetaEvent(tick) {
+    ) : MetaEvent(tick, 0x51) {
         /** Returns this tempo's value as expressed in beats per minute. */
         val beatsPerMinute: Double = MICROSECONDS_PER_MINUTE / tempo
 
@@ -176,7 +196,7 @@ public sealed class MetaEvent(
      */
     public data class SmpteOffset(
         val timecode: SmpteTimecode,
-    ) : MetaEvent(0)
+    ) : MetaEvent(0, 0x54)
 
     /**
      * Time signature is expressed as four numbers. The first two indicate the numerator and the denominator of the
@@ -195,7 +215,7 @@ public sealed class MetaEvent(
         val denominator: Byte,
         val clocksInMetronomeClick: Byte,
         val thirtySecondNotesInMidiQuarterNote: Byte,
-    ) : MetaEvent(tick)
+    ) : MetaEvent(tick, 0x58)
 
     /**
      * Indicates the key signature.
@@ -207,13 +227,13 @@ public sealed class MetaEvent(
         override val tick: Int,
         val key: Key,
         val scale: Scale,
-    ) : MetaEvent(tick) {
+    ) : MetaEvent(tick, 0x59) {
         /**
          * The key of the [KeySignature].
          */
         @Suppress("MagicNumber")
         public enum class Key(
-            private val value: Int,
+            internal val value: Byte,
         ) {
             /** Key of C♭. */
             CFlat(-7),
@@ -264,7 +284,7 @@ public sealed class MetaEvent(
             internal companion object {
                 fun fromValue(value: Byte): Key =
                     entries.firstOrNull {
-                        it.value == value.toInt()
+                        it.value == value
                     } ?: throw IllegalArgumentException("Invalid key value: $value")
             }
         }
@@ -273,7 +293,7 @@ public sealed class MetaEvent(
          * The scale of the [KeySignature].
          */
         public enum class Scale(
-            private val value: Int,
+            internal val value: Byte,
         ) {
             /** Major scale. */
             Major(0),
@@ -285,7 +305,7 @@ public sealed class MetaEvent(
             internal companion object {
                 fun fromValue(value: Byte): Scale =
                     entries.firstOrNull {
-                        it.value == value.toInt()
+                        it.value == value
                     } ?: throw IllegalArgumentException("Invalid scale value: $value")
             }
         }
@@ -303,7 +323,7 @@ public sealed class MetaEvent(
     public data class SequencerSpecific(
         override val tick: Int,
         val data: ByteArray,
-    ) : MetaEvent(tick) {
+    ) : MetaEvent(tick, 0x7F) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -328,9 +348,9 @@ public sealed class MetaEvent(
      */
     public data class Unknown(
         override val tick: Int,
-        val metaType: Byte,
+        override val type: Byte,
         val data: ByteArray,
-    ) : Event(tick) {
+    ) : MetaEvent(tick, type) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -338,7 +358,7 @@ public sealed class MetaEvent(
             other as Unknown
 
             if (tick != other.tick) return false
-            if (metaType != other.metaType) return false
+            if (type != other.type) return false
             if (!data.contentEquals(other.data)) return false
 
             return true
@@ -346,7 +366,7 @@ public sealed class MetaEvent(
 
         override fun hashCode(): Int {
             var result = tick
-            result = 31 * result + metaType
+            result = 31 * result + type
             result = 31 * result + data.contentHashCode()
             return result
         }

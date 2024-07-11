@@ -1,0 +1,7 @@
+[versions]
+kotlin = "1.9.24"
+
+[plugins]
+dokka = { id = "org.jetbrains.dokka", version = "1.9.20" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.3" }
+publish = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }

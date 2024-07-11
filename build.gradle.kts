@@ -1,9 +1,8 @@
 plugins {
-    kotlin("multiplatform") version "1.9.24"
-    id("org.jetbrains.dokka") version "1.9.20"
-    id("io.gitlab.arturbosch.detekt").version("1.23.3")
-
-    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+    kotlin("multiplatform").version(libs.versions.kotlin)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.publish)
     `maven-publish`
     signing
 }

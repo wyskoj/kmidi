@@ -3,6 +3,7 @@ package org.wysko.kmidi.midi
 import junit.framework.TestCase.assertEquals
 import org.wysko.kmidi.midi.StandardMidiFile.Header.Format.Format1
 import org.wysko.kmidi.midi.builder.smf
+import org.wysko.kmidi.midi.reader.StandardMidiFileReader
 import java.io.File
 import kotlin.test.BeforeTest
 import kotlin.test.Test

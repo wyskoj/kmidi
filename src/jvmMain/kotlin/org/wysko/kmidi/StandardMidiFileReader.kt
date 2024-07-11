@@ -1,4 +1,4 @@
-@file:JvmName("StandardMidiFileParserJVM")
+@file:JvmName("StandardMidiFileReaderJvm")
 
 /*
  * Copyright © 2023 Jacob Wysko
@@ -20,7 +20,7 @@
 package org.wysko.kmidi
 
 import org.wysko.kmidi.midi.StandardMidiFile
-import org.wysko.kmidi.midi.StandardMidiFileReader
+import org.wysko.kmidi.midi.reader.StandardMidiFileReader
 import java.io.File
 import java.io.InputStream
 

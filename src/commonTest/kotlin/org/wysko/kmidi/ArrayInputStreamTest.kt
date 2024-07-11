@@ -2,7 +2,7 @@ package org.wysko.kmidi
 
 import junit.framework.TestCase.assertEquals
 import org.junit.Assert.assertArrayEquals
-import org.wysko.kmidi.midi.UnexpectedEndOfFileException
+import org.wysko.kmidi.midi.reader.UnexpectedEndOfFileException
 import kotlin.test.Test
 
 class ArrayInputStreamTest {

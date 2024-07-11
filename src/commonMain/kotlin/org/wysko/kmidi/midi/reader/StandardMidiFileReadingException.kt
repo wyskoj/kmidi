@@ -1,4 +1,4 @@
-package org.wysko.kmidi.midi
+package org.wysko.kmidi.midi.reader
 
 import org.wysko.kmidi.midi.event.MetaEvent
 import kotlin.reflect.KClass
@@ -18,6 +18,11 @@ public sealed class StandardMidiFileReadingException(
 public class InvalidHeaderException(
     type: HeaderExceptionType,
 ) : StandardMidiFileReadingException(type.message) {
+    /**
+     * The type of invalid header error.
+     *
+     * @property message The message of the error.
+     */
     public sealed class HeaderExceptionType(
         public val message: String,
     ) {
@@ -28,6 +33,8 @@ public class InvalidHeaderException(
 
         /**
          * The header is a non-standard length.
+         *
+         * @param length The length of the header.
          */
         public data class InvalidHeaderLength(
             val length: Int,
@@ -35,6 +42,8 @@ public class InvalidHeaderException(
 
         /**
          * The file is a non-standard format.
+         *
+         * @param format The format of the file.
          */
         public data class InvalidFormat(
             val format: Short,
@@ -51,6 +60,8 @@ public class UnexpectedEndOfFileException : StandardMidiFileReadingException("Un
  * The exception that is thrown when a meta-event is incomplete.
  *
  * A meta-event is incomplete if it does not at least meet the length as defined in the SMF Specification 1.0.
+ *
+ * @property metaEventClass The class of the incomplete meta-event.
  */
 public class IncompleteMetaEventException(
     public val metaEventClass: KClass<out MetaEvent>,

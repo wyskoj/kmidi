@@ -17,7 +17,7 @@
 
 package org.wysko.kmidi
 
-import org.wysko.kmidi.midi.UnexpectedEndOfFileException
+import org.wysko.kmidi.midi.reader.UnexpectedEndOfFileException
 import org.wysko.kmidi.util.shl
 import kotlin.experimental.and
 import kotlin.experimental.or

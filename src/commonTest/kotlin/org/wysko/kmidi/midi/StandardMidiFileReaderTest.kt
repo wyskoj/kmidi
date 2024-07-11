@@ -20,6 +20,7 @@ package org.wysko.kmidi.midi
 import org.wysko.kmidi.midi.event.MetaEvent
 import org.wysko.kmidi.midi.event.NoteEvent
 import org.wysko.kmidi.midi.event.ProgramEvent
+import org.wysko.kmidi.midi.reader.StandardMidiFileReader
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

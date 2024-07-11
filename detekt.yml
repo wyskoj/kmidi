@@ -3,6 +3,12 @@ comments:
     active: true
   CommentOverPrivateProperty:
     active: true
+  UndocumentedPublicClass:
+    active: true
+  UndocumentedPublicFunction:
+    active: true
+  UndocumentedPublicProperty:
+    active: true
 
 style:
   MagicNumber:

@@ -5,10 +5,13 @@ comments:
     active: true
   UndocumentedPublicClass:
     active: true
+    excludes: ['**/src/*Test/**']
   UndocumentedPublicFunction:
     active: true
+    excludes: ['**/src/*Test/**']
   UndocumentedPublicProperty:
     active: true
+    excludes: ['**/src/*Test/**']
 
 style:
   MagicNumber:

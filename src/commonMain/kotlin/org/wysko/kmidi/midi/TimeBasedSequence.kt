@@ -11,6 +11,8 @@ private const val DEFAULT_TEMPO = 500000
 /**
  * An extension of a [StandardMidiFile] that provides time-based sequence information. This is useful for
  * applications that need to know the time at which each event occurs.
+ *
+ * @property smf The [StandardMidiFile] to convert to a time-based sequence.
  */
 public class TimeBasedSequence private constructor(
     public val smf: StandardMidiFile,

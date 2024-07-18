@@ -17,6 +17,7 @@ private const val MODULATION_DEPTH_RANGE_LSB_RESOLUTION = 100 / 128.0
  *
  * *This is not an actual MIDI event, but a virtual construct for convenience.*
  *
+ * @property [channel] The channel on which the change occurred.
  * @property [parameterNumber] The [ParameterNumber] that was changed.
  * @property [rpnValue] The new value of the [ParameterNumber].
  */

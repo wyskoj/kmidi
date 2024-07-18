@@ -42,6 +42,13 @@ public open class Arc(
     public val velocity: Byte get() = noteOn.velocity
 
     public companion object {
+        /**
+         * Converts a list of [Arc] objects into a list of [TimedArc] objects.
+         * The [TimedArc] objects will have their start and end times calculated based on the [sequence].
+         *
+         * @param sequence The [TimeBasedSequence] to use for calculating the start and end times.
+         * @return The list of [TimedArc] objects generated from the [Arc] objects.
+         */
         public fun List<Arc>.toTimedArcs(sequence: TimeBasedSequence): List<TimedArc> =
             map { arc ->
                 TimedArc(

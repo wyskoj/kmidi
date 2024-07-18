@@ -41,9 +41,11 @@ public sealed class MetaEvent(
      *
      * @property text The text.
      */
-    public interface Textual {
-        public val text: String
-    }
+    public abstract class Textual(
+        override val tick: Int,
+        override val type: Byte,
+        public open val text: String,
+    ) : MetaEvent(tick, type)
 
     /**
      * Specifies the number of a sequence.
@@ -64,8 +66,7 @@ public sealed class MetaEvent(
     public data class Text(
         override val tick: Int,
         override val text: String,
-    ) : MetaEvent(tick, 0x01),
-        Textual
+    ) : Textual(tick, 0x01, text)
 
     /**
      * A copyright notice. The notice should contain the characters (C), the year of
@@ -77,8 +78,7 @@ public sealed class MetaEvent(
      */
     public data class CopyrightNotice(
         override val text: String,
-    ) : MetaEvent(0, 0x02),
-        Textual
+    ) : Textual(0, 0x02, text)
 
     /**
      * If in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -91,8 +91,7 @@ public sealed class MetaEvent(
      */
     public data class SequenceTrackName(
         override val text: String,
-    ) : MetaEvent(0, 0x03),
-        Textual
+    ) : Textual(0, 0x03, text)
 
     /**
      * A description of the instrumentation to be used in that track.
@@ -103,8 +102,7 @@ public sealed class MetaEvent(
      */
     public data class InstrumentName(
         override val text: String,
-    ) : MetaEvent(0, 0x04),
-        Textual
+    ) : Textual(0, 0x04, text)
 
     /**
      * A lyric to be sung. Generally, each syllable will be a separate lyric event that begins at the event's time.
@@ -114,8 +112,7 @@ public sealed class MetaEvent(
     public data class Lyric(
         override val tick: Int,
         override val text: String,
-    ) : MetaEvent(tick, 0x05),
-        Textual
+    ) : Textual(tick, 0x05, text)
 
     /**
      * Normally in a [format 0][StandardMidiFile.Header.Format.Format0] track, or the first track in a
@@ -127,8 +124,7 @@ public sealed class MetaEvent(
     public data class Marker(
         override val tick: Int,
         override val text: String,
-    ) : MetaEvent(tick, 0x06),
-        Textual
+    ) : Textual(tick, 0x06, text)
 
     /**
      * A description of something happening on a film or video screen or stage at that point in the musical score
@@ -139,8 +135,7 @@ public sealed class MetaEvent(
     public data class CuePoint(
         override val tick: Int,
         override val text: String,
-    ) : MetaEvent(tick, 0x07),
-        Textual
+    ) : Textual(tick, 0x07, text)
 
     /**
      * The MIDI channel (0-15) contained in this event may be used to associate a MIDI channel with all events that
@@ -345,6 +340,8 @@ public sealed class MetaEvent(
 
     /**
      * A meta-event that is not recognized by this library.
+     *
+     * @property data The data of the event.
      */
     public data class Unknown(
         override val tick: Int,

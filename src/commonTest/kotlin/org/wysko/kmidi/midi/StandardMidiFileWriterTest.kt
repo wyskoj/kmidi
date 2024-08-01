@@ -41,7 +41,6 @@ class StandardMidiFileWriterTest {
     fun `Test write then read SMF`() {
         val writer = StandardMidiFileWriter()
         val bytes = writer.write(smf)
-        File("test.mid").writeBytes(bytes)
         val reader = StandardMidiFileReader()
         val smfRead = reader.readByteArray(bytes)
         assertEquals(smf, smfRead)

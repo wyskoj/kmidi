@@ -17,10 +17,9 @@
 
 @file:JvmName("StandardMidiFileReaderJvm")
 
-package org.wysko.kmidi
+package org.wysko.kmidi.midi.reader
 
 import org.wysko.kmidi.midi.StandardMidiFile
-import org.wysko.kmidi.midi.reader.StandardMidiFileReader
 import java.io.File
 import java.io.InputStream
 

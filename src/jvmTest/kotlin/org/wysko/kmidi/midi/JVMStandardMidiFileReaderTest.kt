@@ -19,8 +19,8 @@ package org.wysko.kmidi.midi
 
 import org.junit.Before
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader
-import org.wysko.kmidi.readFile
-import org.wysko.kmidi.readInputStream
+import org.wysko.kmidi.midi.reader.readFile
+import org.wysko.kmidi.midi.reader.readInputStream
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

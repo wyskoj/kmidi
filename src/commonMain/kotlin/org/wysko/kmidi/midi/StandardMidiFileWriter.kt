@@ -210,8 +210,6 @@ public class StandardMidiFileWriter {
                         addAll(intToVlq(event.data.size))
                         addAll(event.data.toList())
                     }
-
-                    else -> Unit
                 }
             }
 

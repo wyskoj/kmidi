@@ -38,20 +38,19 @@ public sealed class ParameterNumber protected constructor(
         public fun from(
             lsb: Byte,
             msb: Byte,
-        ): ParameterNumber =
-            when (msb) {
-                0x0.toByte() ->
-                    when (lsb) {
-                        0x0.toByte() -> RegisteredParameterNumber.PitchBendSensitivity
-                        0x1.toByte() -> RegisteredParameterNumber.FineTuning
-                        0x2.toByte() -> RegisteredParameterNumber.CoarseTuning
-                        0x5.toByte() -> RegisteredParameterNumber.ModulationDepthRange
-                        else -> NonRegisteredParameterNumber(lsb, msb)
-                    }
+        ): ParameterNumber = when {
+            msb == 0x0.toByte() ->
+                when (lsb) {
+                    0x0.toByte() -> RegisteredParameterNumber.PitchBendSensitivity
+                    0x1.toByte() -> RegisteredParameterNumber.FineTuning
+                    0x2.toByte() -> RegisteredParameterNumber.CoarseTuning
+                    0x5.toByte() -> RegisteredParameterNumber.ModulationDepthRange
+                    else -> NonRegisteredParameterNumber(lsb, msb)
+                }
 
-                0x7F.toByte() -> RegisteredParameterNumber.Null
-                else -> NonRegisteredParameterNumber(lsb, msb)
-            }
+            msb == 0x7F.toByte() && lsb == 0x7F.toByte() -> RegisteredParameterNumber.Null
+            else -> NonRegisteredParameterNumber(lsb, msb)
+        }
     }
 }
 

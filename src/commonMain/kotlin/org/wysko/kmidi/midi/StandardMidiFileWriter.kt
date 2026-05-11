@@ -75,7 +75,7 @@ public class StandardMidiFileWriter {
                     addAll(
                         when (this) {
                             is MetricalTime -> short16ToBytes(ticksPerQuarterNote)
-                            is TimecodeBasedTime -> short16ToBytes((framesPerSecond shl 8) and ticksPerFrame)
+                            is TimecodeBasedTime -> short16ToBytes((framesPerSecond shl 8) or ticksPerFrame)
                         },
                     )
                 }

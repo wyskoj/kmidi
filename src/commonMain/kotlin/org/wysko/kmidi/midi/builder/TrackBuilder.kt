@@ -42,7 +42,7 @@ public class TrackBuilder : Builder<StandardMidiFile.Track> {
     private var currentTick = 0
 
     override fun build(): StandardMidiFile.Track =
-        StandardMidiFile.Track((events + MetaEvent.EndOfTrack(events.maxOf { it.tick })))
+        StandardMidiFile.Track((events + MetaEvent.EndOfTrack(events.maxOfOrNull { it.tick } ?: 0)))
 
     /**
      * Adds a single note event to the track.

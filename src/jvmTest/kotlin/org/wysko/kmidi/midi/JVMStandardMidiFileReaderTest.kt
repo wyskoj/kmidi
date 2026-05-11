@@ -53,21 +53,7 @@ class JVMStandardMidiFileReaderTest {
     fun `Test track names`() {
         val stream = JVMStandardMidiFileReaderTest::class.java.getResourceAsStream("/test_midi/bus_driver.mid")
         val midiFile = stream?.let { reader.readInputStream(it) } ?: fail("Could not find resource")
-
-        assertEquals(
-            listOf(
-                "bass",
-                "kit",
-                "guit 1",
-                "piano",
-                "organ",
-                "guit 2",
-                "brass",
-                "tenor sax",
-                "tenor sax #2",
-            ),
-            midiFile.tracks.mapNotNull { it.name },
-        )
+        verifyBusDriverTrackNames(midiFile)
     }
 
     @Test
@@ -83,5 +69,29 @@ class JVMStandardMidiFileReaderTest {
         val generatedBytes = writer.write(smfFromFile)
         val siblingSmf = reader.readByteArray(generatedBytes)
         assertEquals(smfFromFile, siblingSmf)
+    }
+
+    @Test
+    fun `Ttest parse from file input stream`() {
+        val fileInputStream = File("src/jvmTest/resources/test_midi/bus_driver.mid").inputStream()
+        val smf = reader.readInputStream(fileInputStream)
+        verifyBusDriverTrackNames(smf)
+    }
+
+    private fun verifyBusDriverTrackNames(midiFile: StandardMidiFile) {
+        assertEquals(
+            listOf(
+                "bass",
+                "kit",
+                "guit 1",
+                "piano",
+                "organ",
+                "guit 2",
+                "brass",
+                "tenor sax",
+                "tenor sax #2",
+            ),
+            midiFile.tracks.mapNotNull { it.name },
+        )
     }
 }

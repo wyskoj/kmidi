@@ -38,4 +38,4 @@ public fun StandardMidiFileReader.readFile(file: File): StandardMidiFile = readB
  * @return The read [StandardMidiFile].
  */
 public fun StandardMidiFileReader.readInputStream(inputStream: InputStream): StandardMidiFile =
-    readByteArray(inputStream.readBytes())
+    readStream(inputStream)

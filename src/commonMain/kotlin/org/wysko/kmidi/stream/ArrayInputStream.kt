@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.wysko.kmidi
+package org.wysko.kmidi.stream
 
 import org.wysko.kmidi.midi.reader.UnexpectedEndOfFileException
 import org.wysko.kmidi.util.shl
@@ -25,26 +25,25 @@ import kotlin.experimental.or
 @Suppress("MagicNumber")
 internal class ArrayInputStream(
     private val bytes: ByteArray,
-) {
-    var position = 0
-        private set
+) : MidiInputStream {
+    private var position = 0
 
-    val available: Int
-        get() = bytes.size - position
+    override fun available(): Int = bytes.size - position
 
-    fun read(): Byte = if (position < bytes.size) bytes[position++] else throw UnexpectedEndOfFileException()
+    override fun position(): Int = position
 
-    fun readWord(): Short = (read().toShort() shl 8) or read()
+    override fun read(): Byte = if (position < bytes.size) bytes[position++] else throw UnexpectedEndOfFileException()
 
-    fun readDWord(): Int =
-        readNBytes(4).let {
-            return (it[0].toInt() and 0xFF shl 24) or
+    override fun readWord(): Short = (read().toShort() shl 8) or read()
+
+    override fun readDWord(): Int = readNBytes(4).let {
+        (it[0].toInt() and 0xFF shl 24) or
                 (it[1].toInt() and 0xFF shl 16) or
                 (it[2].toInt() and 0xFF shl 8) or
                 (it[3].toInt() and 0xFF)
-        }
+    }
 
-    fun readNBytes(n: Int): ByteArray {
+    override fun readNBytes(n: Int): ByteArray {
         val array = ByteArray(n)
         repeat(n) {
             array[it] = read()
@@ -52,7 +51,7 @@ internal class ArrayInputStream(
         return array
     }
 
-    fun readVlq(): Pair<Int, Int> {
+    override fun readVlq(): Pair<Int, Int> {
         var value = 0
         var byte: Byte
         val start = position
@@ -63,14 +62,14 @@ internal class ArrayInputStream(
         return value to (position - start)
     }
 
-    fun skip(n: Int) {
+    override fun skip(n: Int) {
         if (position + n > bytes.size) {
             throw IndexOutOfBoundsException("Cannot skip $n bytes: only ${bytes.size - position} bytes remaining")
         }
         position += n
     }
 
-    fun read24BitInt(): Int {
+    override fun read24BitInt(): Int {
         val bytes = readNBytes(3)
         val i = (bytes[0].toInt() and 0xFF) shl 16
         val j = (bytes[1].toInt() and 0xFF) shl 8

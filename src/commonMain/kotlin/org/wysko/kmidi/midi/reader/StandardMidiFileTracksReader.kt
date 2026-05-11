@@ -17,7 +17,7 @@
 
 package org.wysko.kmidi.midi.reader
 
-import org.wysko.kmidi.ArrayInputStream
+import org.wysko.kmidi.stream.ArrayInputStream
 import org.wysko.kmidi.SmpteTimecode
 import org.wysko.kmidi.midi.StandardMidiFile
 import org.wysko.kmidi.midi.event.ChannelPressureEvent
@@ -35,6 +35,7 @@ import org.wysko.kmidi.midi.event.ProgramEvent
 import org.wysko.kmidi.midi.event.SysexEvent
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowClean
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowDirty
+import org.wysko.kmidi.stream.MidiInputStream
 import org.wysko.kmidi.util.shl
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -43,7 +44,7 @@ internal class StandardMidiFileTracksReader(
     private val policies: StandardMidiFileReader.Policies,
 ) {
     internal fun readRemainingChunks(
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
         header: StandardMidiFile.Header,
     ): List<StandardMidiFile.Track> {
         val tracks = mutableListOf<StandardMidiFile.Track>()
@@ -67,13 +68,13 @@ internal class StandardMidiFileTracksReader(
                         val isTrailingNullByte = trackLength - bytesRead == 1 && stream.read() == 0.toByte()
                         // If there are no more events and policy allows, exit gracefully
                         val noMoreEventsAndPolicyAllows =
-                            stream.available == 0 && policies.unexpectedEndOfFilePolicy == AllowClean
+                            stream.available() == 0 && policies.unexpectedEndOfFilePolicy == AllowClean
 
                         if (isTrailingNullByte || noMoreEventsAndPolicyAllows) {
                             break
                         }
 
-                        val startingPosition = stream.position
+                        val startingPosition = stream.position()
                         var data1: Byte = -1
                         var data2: Byte
 
@@ -184,7 +185,7 @@ internal class StandardMidiFileTracksReader(
                             }
                         }
 
-                        bytesRead += stream.position - startingPosition
+                        bytesRead += stream.position() - startingPosition
                     }
 
                     tracks += StandardMidiFile.Track(events)
@@ -211,7 +212,7 @@ internal class StandardMidiFileTracksReader(
     }
 
     private fun readMetaEvent(
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
         time: Int,
         metaType: Byte,
     ): Event? =
@@ -302,7 +303,7 @@ internal class StandardMidiFileTracksReader(
         }
 
     private fun readTimeSignature(
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
         time: Int,
     ): MetaEvent.TimeSignature? {
         val (length, _) = stream.readVlq()
@@ -331,7 +332,7 @@ internal class StandardMidiFileTracksReader(
     }
 
     private fun readKeySignature(
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
         time: Int,
     ): KeySignature? {
         val (length, _) = stream.readVlq()
@@ -362,7 +363,7 @@ internal class StandardMidiFileTracksReader(
         }
     }
 
-    private fun readSmpteOffset(stream: ArrayInputStream): MetaEvent.SmpteOffset? {
+    private fun readSmpteOffset(stream: MidiInputStream): MetaEvent.SmpteOffset? {
         val (length, _) = stream.readVlq()
 
         if (length < 5) {
@@ -384,7 +385,7 @@ internal class StandardMidiFileTracksReader(
     }
 
     private fun readTempo(
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
         time: Int,
     ): MetaEvent.SetTempo? {
         val (length, _) = stream.readVlq()
@@ -404,7 +405,7 @@ internal class StandardMidiFileTracksReader(
     }
 
     private fun readMidiChannelPrefix(
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
         time: Int,
     ): MetaEvent.ChannelPrefix? {
         val (length, _) = stream.readVlq()
@@ -429,7 +430,7 @@ internal class StandardMidiFileTracksReader(
         }
     }
 
-    private fun readSequenceNumber(stream: ArrayInputStream): MetaEvent.SequenceNumber? {
+    private fun readSequenceNumber(stream: MidiInputStream): MetaEvent.SequenceNumber? {
         val (length, _) = stream.readVlq()
 
         if (length < 2) {
@@ -449,7 +450,7 @@ internal class StandardMidiFileTracksReader(
 
     private fun readDataByte(
         data1: Byte,
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
     ): Byte =
         if (data1 == (-1).toByte()) {
             stream.read()
@@ -459,7 +460,7 @@ internal class StandardMidiFileTracksReader(
 
     private fun readTwoDataBytes(
         data1: Byte,
-        stream: ArrayInputStream,
+        stream: MidiInputStream,
     ): Pair<Byte, Byte> =
         if (data1 == (-1).toByte()) {
             Pair(stream.read(), stream.read())

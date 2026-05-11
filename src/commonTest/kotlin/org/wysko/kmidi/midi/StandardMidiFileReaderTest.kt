@@ -21,6 +21,7 @@ import org.wysko.kmidi.midi.event.MetaEvent
 import org.wysko.kmidi.midi.event.NoteEvent
 import org.wysko.kmidi.midi.event.ProgramEvent
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader
+import java.io.ByteArrayInputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -60,6 +61,13 @@ class StandardMidiFileReaderTest {
     @Test
     fun testParseExample() {
         val smf = StandardMidiFileReader().readByteArray(SmfExamples.example1)
+        assertEquals(smfExpected1, smf)
+    }
+
+    @Test
+    fun testParseExampleStreamed() {
+        val stream = ByteArrayInputStream(SmfExamples.example1)
+        val smf = StandardMidiFileReader().readStream(stream)
         assertEquals(smfExpected1, smf)
     }
 }

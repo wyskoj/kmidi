@@ -17,14 +17,14 @@
 
 package org.wysko.kmidi.midi.reader
 
-import org.wysko.kmidi.ArrayInputStream
+import org.wysko.kmidi.stream.ArrayInputStream
 import org.wysko.kmidi.midi.StandardMidiFile
 import org.wysko.kmidi.midi.event.MetaEvent
 import org.wysko.kmidi.midi.event.NoteEvent
-import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies
-import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowDirty
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.Disallow
+import org.wysko.kmidi.stream.StreamedInputStream
+import java.io.InputStream
 
 internal const val META_LENGTH_TIME_SIGNATURE = 4
 internal const val CHUNK_TYPE_LENGTH = 4
@@ -162,6 +162,19 @@ public class StandardMidiFileReader(
      */
     public fun readByteArray(bytes: ByteArray): StandardMidiFile {
         val stream = ArrayInputStream(bytes)
+        val header = StandardMidiFileHeaderReader(stream).readHeader()
+        val tracks = StandardMidiFileTracksReader(policies).readRemainingChunks(stream, header)
+        return StandardMidiFile(header, tracks)
+    }
+
+    /**
+     * Parses an [InputStream] of a Standard MIDI file.
+     *
+     * @param input The input stream of the file.
+     * @return A [StandardMidiFile] that represents the contents of the input.
+     */
+    public fun readStream(input: InputStream): StandardMidiFile {
+        val stream = StreamedInputStream(input)
         val header = StandardMidiFileHeaderReader(stream).readHeader()
         val tracks = StandardMidiFileTracksReader(policies).readRemainingChunks(stream, header)
         return StandardMidiFile(header, tracks)

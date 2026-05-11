@@ -17,18 +17,18 @@
 
 package org.wysko.kmidi.midi.reader
 
-import org.wysko.kmidi.ArrayInputStream
 import org.wysko.kmidi.midi.StandardMidiFile
 import org.wysko.kmidi.midi.StandardMidiFile.Header.Division.MetricalTime
 import org.wysko.kmidi.midi.StandardMidiFile.Header.Division.TimecodeBasedTime
 import org.wysko.kmidi.midi.reader.InvalidHeaderException.HeaderExceptionType.InvalidFormat
 import org.wysko.kmidi.midi.reader.InvalidHeaderException.HeaderExceptionType.InvalidHeaderLength
 import org.wysko.kmidi.midi.reader.InvalidHeaderException.HeaderExceptionType.MissingHeader
+import org.wysko.kmidi.stream.MidiInputStream
 import org.wysko.kmidi.util.shr
 import kotlin.experimental.and
 
 internal class StandardMidiFileHeaderReader(
-    private val stream: ArrayInputStream,
+    private val stream: MidiInputStream,
 ) {
     fun readHeader(): StandardMidiFile.Header {
         with(parseMidiFileHeader()) {

@@ -19,8 +19,6 @@ package org.wysko.kmidi.midi.event
 
 import org.wysko.kmidi.SmpteTimecode
 import org.wysko.kmidi.midi.StandardMidiFile
-import org.wysko.kmidi.midi.event.MetaEvent.KeySignature.Key
-import org.wysko.kmidi.midi.event.MetaEvent.KeySignature.Scale
 
 private const val MAX_MIDI_CHANNEL = 15
 private const val MICROSECONDS_PER_MINUTE = 60_000_000.0

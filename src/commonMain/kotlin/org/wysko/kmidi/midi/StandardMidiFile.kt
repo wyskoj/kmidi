@@ -17,7 +17,6 @@
 
 package org.wysko.kmidi.midi
 
-import org.wysko.kmidi.midi.StandardMidiFile.Header
 import org.wysko.kmidi.midi.event.Event
 import org.wysko.kmidi.midi.event.MetaEvent
 import org.wysko.kmidi.midi.event.MetaEvent.EndOfTrack

@@ -28,6 +28,24 @@ internal object MidiConstants {
         const val PITCH_WHEEL_CHANGE = 0b11100000.toByte()
     }
 
+    object SpecialMessages {
+        const val MIDI_TIME_CODE_QTR_FRAME = 0xF1.toByte()
+        const val SONG_POSITION_POINTER = 0xF2.toByte()
+        const val SONG_SELECT = 0xF3.toByte()
+        const val UNDEFINED_RESERVED_F4 = 0xF4.toByte()
+        const val UNDEFINED_RESERVED_F5 = 0xF5.toByte()
+        const val TUNE_REQUEST = 0xF6.toByte()
+        const val END_OF_SYSEX = 0xF7.toByte()
+        const val TIMING_CLOCK = 0xF8.toByte()
+        const val UNDEFINED_RESERVED_F9 = 0xF9.toByte()
+        const val START = 0xFA.toByte()
+        const val CONTINUE = 0xFB.toByte()
+        const val STOP = 0xFC.toByte()
+        const val UNDEFINED_RESERVED_FD = 0xFD.toByte()
+        const val ACTIVE_SENSING = 0xFE.toByte()
+        const val SYSTEM_RESET = 0xFF.toByte()
+    }
+
     object MetaEvents {
         const val SEQUENCE_NUMBER = 0x00.toByte()
         const val TEXT_EVENT = 0x01.toByte()

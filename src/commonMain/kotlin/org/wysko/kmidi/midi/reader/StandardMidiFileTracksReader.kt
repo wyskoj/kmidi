@@ -17,7 +17,6 @@
 
 package org.wysko.kmidi.midi.reader
 
-import org.wysko.kmidi.stream.ArrayInputStream
 import org.wysko.kmidi.SmpteTimecode
 import org.wysko.kmidi.midi.StandardMidiFile
 import org.wysko.kmidi.midi.event.ChannelPressureEvent
@@ -28,6 +27,15 @@ import org.wysko.kmidi.midi.event.MetaEvent.KeySignature
 import org.wysko.kmidi.midi.event.MetaEvent.KeySignature.Scale
 import org.wysko.kmidi.midi.event.MidiConstants.ChannelVoiceMessages
 import org.wysko.kmidi.midi.event.MidiConstants.MetaEvents
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.ACTIVE_SENSING
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.CONTINUE
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.SONG_POSITION_POINTER
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.SONG_SELECT
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.START
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.STOP
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.SYSTEM_RESET
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.TIMING_CLOCK
+import org.wysko.kmidi.midi.event.MidiConstants.SpecialMessages.TUNE_REQUEST
 import org.wysko.kmidi.midi.event.NoteEvent
 import org.wysko.kmidi.midi.event.PitchWheelChangeEvent
 import org.wysko.kmidi.midi.event.PolyphonicKeyPressureEvent
@@ -182,6 +190,20 @@ internal class StandardMidiFileTracksReader(
                                 if (policies.allowRunningStatusAcrossNonMidiEvents) {
                                     prefix = lastPrefix
                                 }
+                            }
+
+                            // Ignore one-byte special messages
+                            prefix in oneByteSpecialMessages -> {
+                            }
+
+                            // Ignore two-byte special messages
+                            prefix == SONG_SELECT -> {
+                                stream.read()
+                            }
+
+                            // Ignore three-byte special messages
+                            prefix == SONG_POSITION_POINTER -> {
+                                stream.readNBytes(2)
                             }
                         }
 
@@ -467,4 +489,16 @@ internal class StandardMidiFileTracksReader(
         } else {
             Pair(data1, stream.read())
         }
+
+    companion object {
+        private val oneByteSpecialMessages = setOf(
+            TUNE_REQUEST,
+            TIMING_CLOCK,
+            START,
+            CONTINUE,
+            STOP,
+            ACTIVE_SENSING,
+            SYSTEM_RESET
+        )
+    }
 }

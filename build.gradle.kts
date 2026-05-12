@@ -87,7 +87,7 @@ publishing {
 nexusPublishing {
     repositories {
         sonatype {
-            nexusUrl.set(uri("https://central.sonatype.com/api/v1/publishers/publish/"))
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
             username = System.getenv("CENTRAL_USERNAME")
             password = System.getenv("CENTRAL_PASSWORD")
         }

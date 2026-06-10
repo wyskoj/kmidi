@@ -31,8 +31,23 @@ internal class StreamedInputStream(
     }
 
     override fun readNBytes(n: Int): ByteArray {
-        position += n
-        return inputStream.readNBytes(n)
+        var offset = 0
+        val buffer = ByteArray(n)
+
+        while (offset < n) {
+            val read = inputStream.read(buffer, offset, n - offset)
+            if (read == -1) {
+                break
+            }
+            offset += read
+            position += read
+        }
+
+        return if (offset == n) {
+            buffer
+        } else {
+            buffer.copyOf(offset)
+        }
     }
 
     override fun readVlq(): Pair<Int, Int> {
@@ -48,8 +63,24 @@ internal class StreamedInputStream(
     }
 
     override fun skip(n: Int) {
-        position += n
-        inputStream.skipNBytes(n.toLong())
+        var remaining = n.toLong()
+
+        while (remaining > 0L) {
+            val skipped = inputStream.skip(remaining)
+            if (skipped > 0L) {
+                remaining -= skipped
+                position += skipped.toInt()
+                continue
+            }
+
+            val byte = inputStream.read()
+            if (byte == -1) {
+                break
+            }
+
+            remaining--
+            position++
+        }
     }
 
     override fun read24BitInt(): Int {

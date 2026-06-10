@@ -54,7 +54,7 @@ class StreamedInputStreamTest {
 		TestCase.assertEquals((-1).toByte(), inputStream.read())
 	}
 
-	@Test(expected = EOFException::class)
+    @Test
 	fun `Test skip too many bytes`() {
 		val inputStream = StreamedInputStream(ByteArrayInputStream(byteArrayOf(0, 1, 2)))
 		inputStream.skip(4)

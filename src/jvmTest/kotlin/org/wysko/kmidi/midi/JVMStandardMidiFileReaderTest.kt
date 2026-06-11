@@ -94,10 +94,4 @@ class JVMStandardMidiFileReaderTest {
             midiFile.tracks.mapNotNull { it.name },
         )
     }
-
-    @Test
-    fun `Test with linkin park numb input stream`() {
-        val file = File("C:\\Users\\Jacob\\Dropbox\\linkin_park-numb.mid").inputStream()
-        val smf = reader.readStream(file)
-    }
 }

@@ -19,14 +19,14 @@ A pragmatic, Kotlin Multiplatform library for parsing, building, and analyzing S
 ### Gradle (Kotlin DSL)
 ```kotlin
 dependencies {
-    implementation("org.wysko:kmidi:0.2.1")
+    implementation("org.wysko:kmidi:0.2.2")
 }
 ```
 
 ### Gradle (Groovy)
 ```groovy
 dependencies {
-    implementation 'org.wysko:kmidi:0.2.1'
+    implementation 'org.wysko:kmidi:0.2.2'
 }
 ```
 
@@ -35,7 +35,7 @@ dependencies {
 <dependency>
     <groupId>org.wysko</groupId>
     <artifactId>kmidi-jvm</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
 </dependency>
 ```
 

@@ -44,6 +44,7 @@ import org.wysko.kmidi.midi.event.SysexEvent
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowClean
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowDirty
 import org.wysko.kmidi.stream.MidiInputStream
+import org.wysko.kmidi.util.decodeMetaEventText
 import org.wysko.kmidi.util.shl
 import kotlin.experimental.and
 import kotlin.experimental.or
@@ -245,43 +246,43 @@ internal class StandardMidiFileTracksReader(
 
             MetaEvents.TEXT_EVENT -> {
                 val (length, _) = stream.readVlq()
-                val text = stream.readNBytes(length).decodeToString()
+                val text = stream.readNBytes(length).decodeMetaEventText()
                 MetaEvent.Text(time, text)
             }
 
             MetaEvents.COPYRIGHT_NOTICE -> {
                 val (length, _) = stream.readVlq()
-                val text = stream.readNBytes(length).decodeToString()
+                val text = stream.readNBytes(length).decodeMetaEventText()
                 MetaEvent.CopyrightNotice(text)
             }
 
             MetaEvents.SEQUENCE_TRACK_NAME -> {
                 val (length, _) = stream.readVlq()
-                val text = stream.readNBytes(length).decodeToString()
+                val text = stream.readNBytes(length).decodeMetaEventText()
                 MetaEvent.SequenceTrackName(text)
             }
 
             MetaEvents.INSTRUMENT_NAME -> {
                 val (length, _) = stream.readVlq()
-                val text = stream.readNBytes(length).decodeToString()
+                val text = stream.readNBytes(length).decodeMetaEventText()
                 MetaEvent.InstrumentName(text)
             }
 
             MetaEvents.LYRIC -> {
                 val (length, _) = stream.readVlq()
-                val text = stream.readNBytes(length).decodeToString()
+                val text = stream.readNBytes(length).decodeMetaEventText()
                 MetaEvent.Lyric(time, text)
             }
 
             MetaEvents.MARKER -> {
                 val (length, _) = stream.readVlq()
-                val text = stream.readNBytes(length).decodeToString()
+                val text = stream.readNBytes(length).decodeMetaEventText()
                 MetaEvent.Marker(time, text)
             }
 
             MetaEvents.CUE_POINT -> {
                 val (length, _) = stream.readVlq()
-                val text = stream.readNBytes(length).decodeToString()
+                val text = stream.readNBytes(length).decodeMetaEventText()
                 MetaEvent.CuePoint(time, text)
             }
 

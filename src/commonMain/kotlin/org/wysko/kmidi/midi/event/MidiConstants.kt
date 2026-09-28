@@ -67,6 +67,8 @@ internal object MidiConstants {
     object Controllers {
         const val DATA_ENTRY_MSB = 0x06.toByte()
         const val DATA_ENTRY_LSB = 0x26.toByte()
+        const val NRPN_LSB = 0x62.toByte()
+        const val NRPN_MSB = 0x63.toByte()
         const val RPN_LSB = 0x64.toByte()
         const val RPN_MSB = 0x65.toByte()
     }

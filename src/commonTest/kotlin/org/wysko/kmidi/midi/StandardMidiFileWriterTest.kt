@@ -20,9 +20,11 @@ package org.wysko.kmidi.midi
 import junit.framework.TestCase.assertEquals
 import org.wysko.kmidi.midi.StandardMidiFile.Header.Format.Format1
 import org.wysko.kmidi.midi.builder.smf
+import org.wysko.kmidi.midi.event.MetaEvent
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 
 class StandardMidiFileWriterTest {
     private lateinit var smf: StandardMidiFile
@@ -60,5 +62,21 @@ class StandardMidiFileWriterTest {
         val reader = StandardMidiFileReader()
         val smfRead = reader.readByteArray(bytes)
         assertEquals(smf, smfRead)
+    }
+
+    @Test
+    fun `Test write then read sequencer-specific and unknown meta events keeps their data`() {
+        val track = StandardMidiFile.Track(
+            listOf(
+                MetaEvent.SequencerSpecific(0, byteArrayOf(0x43, 0x7B)),
+                MetaEvent.Unknown(0, 0x60, byteArrayOf(1, 2, 3)),
+                MetaEvent.EndOfTrack(0),
+            ),
+        )
+        val oneTrack = smf.copy(header = smf.header.copy(trackCount = 1), tracks = listOf(track))
+        val events = StandardMidiFileReader().readByteArray(StandardMidiFileWriter().write(oneTrack)).tracks.single().events
+
+        assertContentEquals(byteArrayOf(0x43, 0x7B), (events[0] as MetaEvent.SequencerSpecific).data)
+        assertContentEquals(byteArrayOf(1, 2, 3), (events[1] as MetaEvent.Unknown).data)
     }
 }

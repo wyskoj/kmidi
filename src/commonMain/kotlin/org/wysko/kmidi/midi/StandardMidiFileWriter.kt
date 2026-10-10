@@ -185,10 +185,7 @@ public class StandardMidiFileWriter {
                     }
 
                     is MetaEvent.SequenceNumber -> addAll(short16ToBytes(event.number))
-                    is MetaEvent.SequencerSpecific -> {
-                        addAll(intToVlq(event.data.size))
-                        addAll(event.data.toList())
-                    }
+                    is MetaEvent.SequencerSpecific -> addAll(event.data.toList())
 
                     is MetaEvent.SetTempo -> addAll(int24ToBytes(event.tempo))
                     is MetaEvent.SmpteOffset -> {
@@ -206,10 +203,7 @@ public class StandardMidiFileWriter {
                         add(event.thirtySecondNotesInMidiQuarterNote)
                     }
 
-                    is MetaEvent.Unknown -> {
-                        addAll(intToVlq(event.data.size))
-                        addAll(event.data.toList())
-                    }
+                    is MetaEvent.Unknown -> addAll(event.data.toList())
                 }
             }
 

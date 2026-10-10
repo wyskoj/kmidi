@@ -290,6 +290,10 @@ internal class StandardMidiFileTracksReader(
                 readMidiChannelPrefix(stream, time)
             }
 
+            MetaEvents.MIDI_PORT -> {
+                readMidiPort(stream, time)
+            }
+
             MetaEvents.END_OF_TRACK -> {
                 val (length, _) = stream.readVlq()
                 stream.skip(length)
@@ -450,6 +454,22 @@ internal class StandardMidiFileTracksReader(
                 policies.ignoreBadChannelPrefixes -> null
                 else -> throw e
             }
+        }
+    }
+
+    // The MIDI Port meta-event is outside the specification, so one that isn't a single port number from 0 to 127 is
+    // kept as an unknown meta-event rather than rejected.
+    private fun readMidiPort(
+        stream: MidiInputStream,
+        time: Int,
+    ): MetaEvent {
+        val (length, _) = stream.readVlq()
+        val bytes = stream.readNBytes(length)
+        val port = bytes.singleOrNull()
+        return if (port != null && port >= 0) {
+            MetaEvent.MidiPort(time, port)
+        } else {
+            MetaEvent.Unknown(time, MetaEvents.MIDI_PORT, bytes)
         }
     }
 

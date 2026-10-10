@@ -156,6 +156,24 @@ public sealed class MetaEvent(
     }
 
     /**
+     * The MIDI port that the events after it in this track are sent to.
+     *
+     * Not part of the Standard MIDI File specification, but widely written (by MuseScore, among others) and widely
+     * supported. Each port has its own 16 channels, so a file can address more than 16 channels: the same channel
+     * number on two ports is two different channels. A track without one of these is on port 0.
+     *
+     * @property port The port, from 0 to 127.
+     */
+    public data class MidiPort(
+        override val tick: Int,
+        val port: Byte,
+    ) : MetaEvent(tick, 0x21) {
+        init {
+            require(port >= 0) { "Invalid port: $port" }
+        }
+    }
+
+    /**
      * End of track.
      */
     public data class EndOfTrack(

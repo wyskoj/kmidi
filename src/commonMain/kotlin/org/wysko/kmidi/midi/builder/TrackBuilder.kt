@@ -516,6 +516,32 @@ public class TrackBuilder : Builder<StandardMidiFile.Track> {
     }
 
     /**
+     * Adds a MIDI Port meta-event to the track, sending the events after it to [port].
+     *
+     * - If [deltaTime] is specified, the event will occur after the specified number of ticks.
+     * - If [absoluteTime] is specified, the event will occur at the specified time.
+     * - If neither are specified, the event will occur immediately after the previous event (or, if the last event is
+     * a note, after its `NoteOff` event).
+     *
+     * *No more than one of [deltaTime] and [absoluteTime] can be specified.*
+     *
+     * @param port The port, from 0 to 127.
+     * @param deltaTime Optionally, the number of ticks to wait before the event occurs.
+     * @param absoluteTime Optionally, the time at which the event should occur.
+     * @throws IllegalArgumentException If both [deltaTime] and [absoluteTime] are specified.
+     * @see MetaEvent.MidiPort
+     */
+    public fun midiPort(
+        port: Int,
+        deltaTime: Int? = null,
+        absoluteTime: Int? = null,
+    ) {
+        require(port in 0..Byte.MAX_VALUE) { "Invalid port: $port" }
+        adjustTime(deltaTime, absoluteTime)
+        events += MetaEvent.MidiPort(currentTick, port.toByte())
+    }
+
+    /**
      * Adds a text meta-event to the track.
      *
      * - If [deltaTime] is specified, the event will occur [deltaTime] ticks after the previous event (or, if the last

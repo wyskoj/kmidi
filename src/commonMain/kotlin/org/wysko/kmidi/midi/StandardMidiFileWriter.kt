@@ -178,6 +178,7 @@ public class StandardMidiFileWriter {
                 when (event) {
                     is MetaEvent.Textual -> writeTextualEvent(event)
                     is MetaEvent.ChannelPrefix -> add(event.channel)
+                    is MetaEvent.MidiPort -> add(event.port)
                     is MetaEvent.EndOfTrack -> Unit
                     is MetaEvent.KeySignature -> {
                         add(event.key.value)

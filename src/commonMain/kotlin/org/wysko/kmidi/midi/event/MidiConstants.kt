@@ -56,6 +56,7 @@ internal object MidiConstants {
         const val MARKER = 0x06.toByte()
         const val CUE_POINT = 0x07.toByte()
         const val MIDI_CHANNEL_PREFIX = 0x20.toByte()
+        const val MIDI_PORT = 0x21.toByte()
         const val END_OF_TRACK = 0x2F.toByte()
         const val TEMPO = 0x51.toByte()
         const val SMPTE_OFFSET = 0x54.toByte()

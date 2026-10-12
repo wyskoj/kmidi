@@ -50,6 +50,8 @@ internal class StreamedInputStream(
         }
     }
 
+    override fun readUpToNBytes(n: Int): ByteArray = readNBytes(n)
+
     override fun readVlq(): Pair<Int, Int> {
         var value = 0
         var byte: Byte

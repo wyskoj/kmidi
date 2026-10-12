@@ -51,6 +51,8 @@ internal class ArrayInputStream(
         return array
     }
 
+    override fun readUpToNBytes(n: Int): ByteArray = readNBytes(minOf(n, available()))
+
     override fun readVlq(): Pair<Int, Int> {
         var value = 0
         var byte: Byte

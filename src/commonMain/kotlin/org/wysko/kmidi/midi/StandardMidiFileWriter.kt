@@ -54,6 +54,7 @@ public class StandardMidiFileWriter {
         buildList {
             addAll(writeHeader(smf))
             smf.tracks.forEach { addAll(writeTrack(it)) }
+            smf.xfKaraokeTrack?.let { addAll(writeTrack(it, chunkType = "XFKM")) }
         }.toByteArray()
 
     private fun writeHeader(smf: StandardMidiFile): List<Byte> =
@@ -82,9 +83,12 @@ public class StandardMidiFileWriter {
             },
         )
 
-    private fun writeTrack(track: StandardMidiFile.Track): List<Byte> =
+    private fun writeTrack(
+        track: StandardMidiFile.Track,
+        chunkType: String = "MTrk",
+    ): List<Byte> =
         buildChunk(
-            "MTrk",
+            chunkType,
             buildList {
                 var runningStatus: Byte = 0
                 var lastTick = 0

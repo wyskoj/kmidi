@@ -163,8 +163,8 @@ public class StandardMidiFileReader(
     public fun readByteArray(bytes: ByteArray): StandardMidiFile {
         val stream = ArrayInputStream(bytes)
         val header = StandardMidiFileHeaderReader(stream).readHeader()
-        val tracks = StandardMidiFileTracksReader(policies).readRemainingChunks(stream, header)
-        return StandardMidiFile(header, tracks)
+        val chunks = StandardMidiFileTracksReader(policies).readRemainingChunks(stream, header)
+        return StandardMidiFile(header, chunks.tracks, chunks.xfKaraokeTrack)
     }
 
     /**
@@ -176,7 +176,7 @@ public class StandardMidiFileReader(
     public fun readStream(input: InputStream): StandardMidiFile {
         val stream = StreamedInputStream(input)
         val header = StandardMidiFileHeaderReader(stream).readHeader()
-        val tracks = StandardMidiFileTracksReader(policies).readRemainingChunks(stream, header)
-        return StandardMidiFile(header, tracks)
+        val chunks = StandardMidiFileTracksReader(policies).readRemainingChunks(stream, header)
+        return StandardMidiFile(header, chunks.tracks, chunks.xfKaraokeTrack)
     }
 }

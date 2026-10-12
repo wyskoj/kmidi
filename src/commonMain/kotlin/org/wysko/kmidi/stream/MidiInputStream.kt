@@ -7,6 +7,8 @@ internal interface MidiInputStream {
     fun readWord(): Short
     fun readDWord(): Int
     fun readNBytes(n: Int): ByteArray
+    /** Reads [n] bytes, or fewer if the input ends first. */
+    fun readUpToNBytes(n: Int): ByteArray
     fun readVlq(): Pair<Int, Int>
     fun skip(n: Int)
     fun read24BitInt(): Int

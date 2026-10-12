@@ -30,12 +30,16 @@ private const val MAX_TPQ = 0b0111_1111_1111_1111
  *
  * @property header The header of the file.
  * @property tracks The tracks of the file.
+ * @property xfKaraokeTrack The karaoke track of a Yamaha XF file, or null if the file has none. XF files keep their
+ * lyrics in an `XFKM` chunk after the other tracks. It shares their timeline, but it isn't one of [tracks] and the
+ * [header][Header.trackCount] doesn't count it.
  * @throws IllegalArgumentException If the length of [tracks] does not match the number specified in the
  * [header][Header.trackCount].
  */
 public data class StandardMidiFile(
     val header: Header,
     val tracks: List<Track>,
+    val xfKaraokeTrack: Track? = null,
 ) {
     init {
         check(tracks.size == header.trackCount.toInt()) {

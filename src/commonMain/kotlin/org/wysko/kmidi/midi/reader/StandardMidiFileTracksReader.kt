@@ -43,25 +43,41 @@ import org.wysko.kmidi.midi.event.ProgramEvent
 import org.wysko.kmidi.midi.event.SysexEvent
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowClean
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader.Policies.UnexpectedEndOfFileExceptionPolicy.AllowDirty
+import org.wysko.kmidi.stream.ArrayInputStream
 import org.wysko.kmidi.stream.MidiInputStream
 import org.wysko.kmidi.util.decodeMetaEventText
 import org.wysko.kmidi.util.shl
 import kotlin.experimental.and
 import kotlin.experimental.or
 
+/** The chunk type a Yamaha XF file keeps its karaoke track in. */
+private const val XF_KARAOKE_CHUNK_TYPE = "XFKM"
+
+/** The bytes a chunk type can be made of. */
+private val PRINTABLE_ASCII = 0x20.toByte()..0x7E.toByte()
+
 internal class StandardMidiFileTracksReader(
     private val policies: StandardMidiFileReader.Policies,
 ) {
+    /**
+     * The chunks after the header.
+     *
+     * @property tracks The tracks the header counts.
+     * @property xfKaraokeTrack The karaoke track of a Yamaha XF file, if there is one.
+     */
+    internal class Chunks(
+        val tracks: List<StandardMidiFile.Track>,
+        val xfKaraokeTrack: StandardMidiFile.Track?,
+    )
+
     internal fun readRemainingChunks(
         stream: MidiInputStream,
         header: StandardMidiFile.Header,
-    ): List<StandardMidiFile.Track> {
+    ): Chunks {
         val tracks = mutableListOf<StandardMidiFile.Track>()
+        var isFileCut = false
 
         for (i in 0..<header.trackCount.toInt()) {
-            var time = 0
-            var prefix: Byte = 0
-            var bytesRead = 0
             val events = mutableListOf<Event>()
 
             try {
@@ -72,151 +88,14 @@ internal class StandardMidiFileTracksReader(
                     // Skip the chunk, as it is not a track
                     stream.skip(trackLength)
                 } else {
-                    while (bytesRead < trackLength) {
-                        // Some MIDI files have a trailing 0x00 byte, which should be ignored
-                        val isTrailingNullByte = trackLength - bytesRead == 1 && stream.read() == 0.toByte()
-                        // If there are no more events and policy allows, exit gracefully
-                        val noMoreEventsAndPolicyAllows =
-                            stream.available() == 0 && policies.unexpectedEndOfFilePolicy == AllowClean
-
-                        if (isTrailingNullByte || noMoreEventsAndPolicyAllows) {
-                            break
-                        }
-
-                        val startingPosition = stream.position()
-                        var data1: Byte = -1
-                        var data2: Byte
-
-                        // Read the delta time
-                        val (deltaTime, _) = stream.readVlq()
-                        time += deltaTime
-
-                        // Read the status byte
-                        val lastPrefix = prefix
-                        val statusByte = stream.read()
-                        if (statusByte and IS_STATUS_MASK != 0.toByte()) {
-                            prefix = statusByte
-                        } else {
-                            data1 = statusByte
-                        }
-
-                        // Separate channel and prefix
-                        val status = prefix and STATUS_MASK
-                        val channel = prefix and CHANNEL_MASK
-
-                        when {
-                            status == ChannelVoiceMessages.NOTE_OFF_EVENT -> {
-                                val bytes = readTwoDataBytes(data1, stream)
-                                data1 = bytes.first
-                                data2 = bytes.second
-                                events += NoteEvent.NoteOff(time, channel, data1, data2)
-                            }
-
-                            status == ChannelVoiceMessages.NOTE_ON_EVENT -> {
-                                val bytes = readTwoDataBytes(data1, stream)
-                                data1 = bytes.first
-                                data2 = bytes.second
-
-                                if (policies.coerceVelocityToRange) {
-                                    data2 =
-                                        data2
-                                            .toUByte()
-                                            .toInt()
-                                            .coerceIn(SEVEN_BIT_RANGE)
-                                            .toByte()
-                                }
-
-                                // If the velocity is 0, it should be treated as a NoteOff event
-                                if (data2 == 0.toByte()) {
-                                    events += NoteEvent.NoteOff(time, channel, note = data1, velocity = 0)
-                                } else {
-                                    events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
-                                }
-                            }
-
-                            status == ChannelVoiceMessages.POLYPHONIC_KEY_PRESSURE -> {
-                                val bytes = readTwoDataBytes(data1, stream)
-                                data1 = bytes.first
-                                data2 = bytes.second
-                                events += PolyphonicKeyPressureEvent(time, channel, note = data1, pressure = data2)
-                            }
-
-                            status == ChannelVoiceMessages.CONTROL_CHANGE -> {
-                                val bytes = readTwoDataBytes(data1, stream)
-                                data1 = bytes.first
-                                data2 = bytes.second
-                                events += ControlChangeEvent(time, channel, controller = data1, value = data2)
-                            }
-
-                            status == ChannelVoiceMessages.PROGRAM_CHANGE -> {
-                                data1 = readDataByte(data1, stream)
-                                events += ProgramEvent(time, channel, program = data1)
-                            }
-
-                            status == ChannelVoiceMessages.CHANNEL_PRESSURE -> {
-                                data1 = readDataByte(data1, stream)
-                                events += ChannelPressureEvent(time, channel, pressure = data1)
-                            }
-
-                            status == ChannelVoiceMessages.PITCH_WHEEL_CHANGE -> {
-                                val bytes = readTwoDataBytes(data1, stream)
-                                data1 = bytes.first
-                                data2 = bytes.second
-                                events +=
-                                    PitchWheelChangeEvent(
-                                        time,
-                                        channel,
-                                        value = (data2.toShort() shl 7) or data1.toShort(),
-                                    )
-                            }
-
-                            status == 0xF0.toByte() && (prefix == 0xF0.toByte() || prefix == 0xF7.toByte()) -> {
-                                // Read the length of the system-exclusive message
-                                val (length, _) = stream.readVlq()
-
-                                // Read the system-exclusive message
-                                val message = stream.readNBytes(length)
-
-                                events += SysexEvent(time, message)
-
-                                if (policies.allowRunningStatusAcrossNonMidiEvents) {
-                                    prefix = lastPrefix
-                                }
-                            }
-
-                            status == 0xF0.toByte() && prefix == 0xFF.toByte() -> {
-                                val metaType = stream.read()
-                                readMetaEvent(stream, time, metaType)?.let { events += it }
-
-                                if (policies.allowRunningStatusAcrossNonMidiEvents) {
-                                    prefix = lastPrefix
-                                }
-                            }
-
-                            // Ignore one-byte special messages
-                            prefix in oneByteSpecialMessages -> {
-                            }
-
-                            // Ignore two-byte special messages
-                            prefix == SONG_SELECT -> {
-                                stream.read()
-                            }
-
-                            // Ignore three-byte special messages
-                            prefix == SONG_POSITION_POINTER -> {
-                                stream.readNBytes(2)
-                            }
-                        }
-
-                        bytesRead += stream.position() - startingPosition
-                    }
-
+                    readTrackEvents(stream, trackLength, events)
                     tracks += StandardMidiFile.Track(events)
                 }
             } catch (e: UnexpectedEndOfFileException) {
                 // If the policy allows, return the tracks that have been read
                 if (policies.unexpectedEndOfFilePolicy == AllowDirty) {
                     tracks += StandardMidiFile.Track(events)
+                    isFileCut = true
                     break
                 } else {
                     throw e
@@ -231,7 +110,187 @@ internal class StandardMidiFileTracksReader(
             }
         }
 
-        return tracks
+        return Chunks(tracks, if (isFileCut) null else readXfKaraokeTrack(stream))
+    }
+
+    /**
+     * Reads the karaoke track of a Yamaha XF file, or returns null if there isn't one.
+     *
+     * XF files keep their lyrics in an `XFKM` chunk, after the tracks the header counts (and usually after an `XFIH`
+     * information chunk). It is laid out like a track and shares the timeline of the other tracks. Nothing after the
+     * counted tracks is part of the standard, so anything that can't be read there ends the search instead of failing
+     * the file: a karaoke track cut short keeps the events before the cut.
+     */
+    private fun readXfKaraokeTrack(stream: MidiInputStream): StandardMidiFile.Track? {
+        val events = mutableListOf<Event>()
+        try {
+            while (true) {
+                val chunkType = stream.readNBytes(CHUNK_TYPE_LENGTH)
+                if (chunkType.size < CHUNK_TYPE_LENGTH || chunkType.any { it !in PRINTABLE_ASCII }) return null
+                val chunkLength = stream.readDWord()
+                if (chunkLength < 0) return null
+
+                if (chunkType.decodeToString() == XF_KARAOKE_CHUNK_TYPE) {
+                    val chunk = stream.readUpToNBytes(chunkLength)
+                    readTrackEvents(ArrayInputStream(chunk), chunk.size, events)
+                    return StandardMidiFile.Track(events)
+                }
+                stream.skip(chunkLength)
+            }
+        } catch (_: StandardMidiFileReadingException) {
+        } catch (_: IndexOutOfBoundsException) {
+        }
+        return events.takeIf { it.isNotEmpty() }?.let { StandardMidiFile.Track(it) }
+    }
+
+    /** Reads the events of a track chunk [trackLength] bytes long into [events]. */
+    private fun readTrackEvents(
+        stream: MidiInputStream,
+        trackLength: Int,
+        events: MutableList<Event>,
+    ) {
+        var time = 0
+        var prefix: Byte = 0
+        var bytesRead = 0
+
+        while (bytesRead < trackLength) {
+            // Some MIDI files have a trailing 0x00 byte, which should be ignored
+            val isTrailingNullByte = trackLength - bytesRead == 1 && stream.read() == 0.toByte()
+            // If there are no more events and policy allows, exit gracefully
+            val noMoreEventsAndPolicyAllows =
+                stream.available() == 0 && policies.unexpectedEndOfFilePolicy == AllowClean
+
+            if (isTrailingNullByte || noMoreEventsAndPolicyAllows) {
+                break
+            }
+
+            val startingPosition = stream.position()
+            var data1: Byte = -1
+            var data2: Byte
+
+            // Read the delta time
+            val (deltaTime, _) = stream.readVlq()
+            time += deltaTime
+
+            // Read the status byte
+            val lastPrefix = prefix
+            val statusByte = stream.read()
+            if (statusByte and IS_STATUS_MASK != 0.toByte()) {
+                prefix = statusByte
+            } else {
+                data1 = statusByte
+            }
+
+            // Separate channel and prefix
+            val status = prefix and STATUS_MASK
+            val channel = prefix and CHANNEL_MASK
+
+            when {
+                status == ChannelVoiceMessages.NOTE_OFF_EVENT -> {
+                    val bytes = readTwoDataBytes(data1, stream)
+                    data1 = bytes.first
+                    data2 = bytes.second
+                    events += NoteEvent.NoteOff(time, channel, data1, data2)
+                }
+
+                status == ChannelVoiceMessages.NOTE_ON_EVENT -> {
+                    val bytes = readTwoDataBytes(data1, stream)
+                    data1 = bytes.first
+                    data2 = bytes.second
+
+                    if (policies.coerceVelocityToRange) {
+                        data2 =
+                            data2
+                                .toUByte()
+                                .toInt()
+                                .coerceIn(SEVEN_BIT_RANGE)
+                                .toByte()
+                    }
+
+                    // If the velocity is 0, it should be treated as a NoteOff event
+                    if (data2 == 0.toByte()) {
+                        events += NoteEvent.NoteOff(time, channel, note = data1, velocity = 0)
+                    } else {
+                        events += NoteEvent.NoteOn(time, channel, note = data1, velocity = data2)
+                    }
+                }
+
+                status == ChannelVoiceMessages.POLYPHONIC_KEY_PRESSURE -> {
+                    val bytes = readTwoDataBytes(data1, stream)
+                    data1 = bytes.first
+                    data2 = bytes.second
+                    events += PolyphonicKeyPressureEvent(time, channel, note = data1, pressure = data2)
+                }
+
+                status == ChannelVoiceMessages.CONTROL_CHANGE -> {
+                    val bytes = readTwoDataBytes(data1, stream)
+                    data1 = bytes.first
+                    data2 = bytes.second
+                    events += ControlChangeEvent(time, channel, controller = data1, value = data2)
+                }
+
+                status == ChannelVoiceMessages.PROGRAM_CHANGE -> {
+                    data1 = readDataByte(data1, stream)
+                    events += ProgramEvent(time, channel, program = data1)
+                }
+
+                status == ChannelVoiceMessages.CHANNEL_PRESSURE -> {
+                    data1 = readDataByte(data1, stream)
+                    events += ChannelPressureEvent(time, channel, pressure = data1)
+                }
+
+                status == ChannelVoiceMessages.PITCH_WHEEL_CHANGE -> {
+                    val bytes = readTwoDataBytes(data1, stream)
+                    data1 = bytes.first
+                    data2 = bytes.second
+                    events +=
+                        PitchWheelChangeEvent(
+                            time,
+                            channel,
+                            value = (data2.toShort() shl 7) or data1.toShort(),
+                        )
+                }
+
+                status == 0xF0.toByte() && (prefix == 0xF0.toByte() || prefix == 0xF7.toByte()) -> {
+                    // Read the length of the system-exclusive message
+                    val (length, _) = stream.readVlq()
+
+                    // Read the system-exclusive message
+                    val message = stream.readNBytes(length)
+
+                    events += SysexEvent(time, message)
+
+                    if (policies.allowRunningStatusAcrossNonMidiEvents) {
+                        prefix = lastPrefix
+                    }
+                }
+
+                status == 0xF0.toByte() && prefix == 0xFF.toByte() -> {
+                    val metaType = stream.read()
+                    readMetaEvent(stream, time, metaType)?.let { events += it }
+
+                    if (policies.allowRunningStatusAcrossNonMidiEvents) {
+                        prefix = lastPrefix
+                    }
+                }
+
+                // Ignore one-byte special messages
+                prefix in oneByteSpecialMessages -> {
+                }
+
+                // Ignore two-byte special messages
+                prefix == SONG_SELECT -> {
+                    stream.read()
+                }
+
+                // Ignore three-byte special messages
+                prefix == SONG_POSITION_POINTER -> {
+                    stream.readNBytes(2)
+                }
+            }
+
+            bytesRead += stream.position() - startingPosition
+        }
     }
 
     private fun readMetaEvent(

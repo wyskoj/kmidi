@@ -78,6 +78,11 @@ public class TimeBasedSequence private constructor(
      */
     public val firstNoteOnTime: Duration? = eventTimes.filterKeys { it is NoteEvent.NoteOn }.values.minOrNull()
 
+    init {
+        // The karaoke track has times too, but it isn't part of what's played, so it doesn't count toward the duration
+        smf.xfKaraokeTrack?.let { registerEvents(it.events) }
+    }
+
     /**
      * Returns the time at which the specified [event] occurs.
      *

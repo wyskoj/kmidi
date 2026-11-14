@@ -60,6 +60,12 @@ public class TimeBasedSequence private constructor(
                 }
             }
 
+    /**
+     * The time at which each of [tempos] starts. Kept apart from [eventTimes] because the default tempo added when the
+     * file sets none at its start is not one of the file's events.
+     */
+    private val tempoTimes: List<Duration> = tempos.map { getTimeAtTick(it.tick) }
+
     private val eventTimes =
         smf.tracks
             .flatMap { it.events }
@@ -160,7 +166,7 @@ public class TimeBasedSequence private constructor(
     public fun getTempoAtTime(time: Duration): MetaEvent.SetTempo =
         when {
             tempos.size == 1 || time < 0.seconds -> tempos.first()
-            else -> tempos.last { eventTimes[it]!! <= time }
+            else -> tempos[tempoTimes.indexOfLast { it <= time }]
         }
 
     /**

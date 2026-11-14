@@ -18,7 +18,9 @@
 package org.wysko.kmidi.midi
 
 import org.junit.Before
+import org.wysko.kmidi.midi.StandardMidiFile.Header.Format.Format0
 import org.wysko.kmidi.midi.TimeBasedSequence.Companion.toTimeBasedSequence
+import org.wysko.kmidi.midi.builder.smf
 import org.wysko.kmidi.midi.event.NoteEvent
 import org.wysko.kmidi.midi.reader.StandardMidiFileReader
 import kotlin.test.Test
@@ -53,5 +55,18 @@ class TimeBasedSequenceTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `Tempo at time falls back to the default tempo when the file sets none at its start`() {
+        val sequence = smf {
+            division = tpq(96)
+            format = Format0
+            track { tempo(90, absoluteTime = 192) }
+        }.toTimeBasedSequence()
+
+        assertEquals(120.0, sequence.getTempoAtTime(0.5.seconds).beatsPerMinute, 0.001)
+        assertEquals(90.0, sequence.getTempoAtTime(1.seconds).beatsPerMinute, 0.001)
+        assertEquals(90.0, sequence.getTempoAtTime(2.seconds).beatsPerMinute, 0.001)
     }
 }
